@@ -22,7 +22,7 @@ train_set = torchvision.datasets.CIFAR10(root='./data', train=True, download=Tru
 train_indices = [i for i in range(len(train_set)) if train_set[i][1] in classes_to_learn]
 filtered_dataset = Subset(train_set, train_indices)
 
-trainloader = torch.utils.data.DataLoader(filtered_dataset, batch_size=batch_size, num_workers=2, sampler=SubsetRandomSampler(train_indices))
+trainloader = torch.utils.data.DataLoader(train_set, batch_size=batch_size, num_workers=2, sampler=SubsetRandomSampler(train_indices))
 
 # Create a teacher-34 model
 teacher = models.resnet34(pretrained=True)
