@@ -24,8 +24,6 @@ transform = transforms.Compose([transforms.RandomHorizontalFlip(),
 train_set = torchvision.datasets.CIFAR10(root='./data', train=True, download=True, transform=transform)
 
 train_indices = [i for i in range(len(train_set)) if train_set[i][1] in classes_to_learn]
-filtered_dataset = Subset(train_set, train_indices)
-
 trainloader = torch.utils.data.DataLoader(train_set, batch_size=batch_size, num_workers=2, sampler=SubsetRandomSampler(train_indices))
 
 # Create a teacher-34 model
@@ -51,4 +49,4 @@ if __name__ == '__main__':
 
     print('Finished Training')
     classes = '_'.join([f"{i}" for i in classes_to_learn])
-    torch.save(teacher.state_dict(), f"teacher_teacher_{teacher_name}_classes_{classes}.weights")
+    torch.save(teacher.state_dict(), f"teacher_{teacher_name}_classes_{classes}.weights")
