@@ -13,3 +13,8 @@ Celem projektu będzie opracowanie metody generacji syntetycznych obrazów dla u
 - Configure databricks access `databricks configure --host https://community.cloud.databricks.com/`
 - Change parameters in config file if needed
 - Run `python main.py`
+
+## Google Cloud Compute Engine instance for tests
+- https://console.cloud.google.com/compute/instances?project=dreamingcl
+- `Create instance`
+- 
