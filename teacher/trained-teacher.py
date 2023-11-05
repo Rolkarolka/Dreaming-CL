@@ -50,4 +50,4 @@ if __name__ == '__main__':
         print(f'Epoch {epoch + 1}, Loss: {running_loss / 100:.4f}')
 
     print('Finished Training')
-    torch.save(teacher.state_dict(), f"teacher_teacher_{teacher_name}_classes_{classes_to_learn}.weights")
+    torch.save(teacher.state_dict(), f"teacher_teacher_{teacher_name}_classes_{'_'.join(classes_to_learn)}.weights")
