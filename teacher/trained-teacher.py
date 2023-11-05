@@ -12,6 +12,9 @@ num_epochs = 10
 learning_rate = 0.001
 momentum = 0.9
 batch_size = 64
+teacher = models.resnet34(weights=ResNet34_Weights.DEFAULT)
+teacher_name = "resnet34"
+
 
 
 transform = transforms.Compose([transforms.RandomHorizontalFlip(),
@@ -26,7 +29,6 @@ filtered_dataset = Subset(train_set, train_indices)
 trainloader = torch.utils.data.DataLoader(train_set, batch_size=batch_size, num_workers=2, sampler=SubsetRandomSampler(train_indices))
 
 # Create a teacher-34 model
-teacher = models.resnet34(weights=ResNet34_Weights.DEFAULT)
 num_ftrs = teacher.fc.in_features
 teacher.fc = nn.Linear(num_ftrs, len(classes_to_learn))
 
@@ -48,4 +50,4 @@ if __name__ == '__main__':
         print(f'Epoch {epoch + 1}, Loss: {running_loss / 100:.4f}')
 
     print('Finished Training')
-    torch.save(teacher.state_dict(), f"teacher_teacher_{teacher.__name__}_classes_{classes_to_learn}.weights")
+    torch.save(teacher.state_dict(), f"teacher_teacher_{teacher_name}_classes_{classes_to_learn}.weights")
