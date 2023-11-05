@@ -4,7 +4,7 @@ import torchvision
 import torchvision.transforms as transforms
 import torch.optim as optim
 import torchvision.models as models
-from torch.utils.data import Subset
+from torch.utils.data import Subset, SubsetRandomSampler
 
 classes_to_learn = [1, 2, 3]
 num_epochs = 10
@@ -19,8 +19,10 @@ transform = transforms.Compose([transforms.RandomHorizontalFlip(),
                                transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
 
 train_set = torchvision.datasets.CIFAR10(root='./data', train=True, download=True, transform=transform)
-filtered_dataset = Subset(train_set, [i for i in range(len(train_set)) if train_set[i][1] in classes_to_learn])
-trainloader = torch.utils.data.DataLoader(filtered_dataset, batch_size=batch_size, shuffle=True, num_workers=2)
+train_indices = [i for i in range(len(train_set)) if train_set[i][1] in classes_to_learn]
+filtered_dataset = Subset(train_set, train_indices)
+
+trainloader = torch.utils.data.DataLoader(filtered_dataset, batch_size=batch_size, shuffle=True, num_workers=2, sampler=SubsetRandomSampler(train_indices))
 
 # Create a teacher-34 model
 teacher = models.resnet34(pretrained=True)
