@@ -6,7 +6,7 @@ import torch.optim as optim
 import torchvision.models as models
 from torch.utils.data import Subset, SubsetRandomSampler
 
-classes_to_learn = [1, 2, 3]
+classes_to_learn = [1, 2]
 num_epochs = 10
 learning_rate = 0.001
 momentum = 0.9
