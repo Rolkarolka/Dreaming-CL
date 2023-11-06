@@ -1,14 +1,12 @@
 import os
 
 import torch
-import torchvision
 from lightning.pytorch.loggers import MLFlowLogger
 import torch.nn as nn
-from torch.utils.data import Subset, SubsetRandomSampler
 from torchvision import models
-from torchvision.transforms import transforms
 import lightning.pytorch as pl
 
+from models.DreamingDataModule import CIFARDataModule
 from models.DreamingNet import DreamingNet
 
 if __name__ == '__main__':
@@ -38,48 +36,21 @@ if __name__ == '__main__':
     student_num_features = student.fc.in_features
     student.fc = nn.Linear(student_num_features, len(classes_to_dream) + len(classes_to_learn))
 
-    # load data
-    transform = transforms.Compose([transforms.RandomHorizontalFlip(),
-                                    transforms.RandomCrop(32, padding=4),
-                                    transforms.ToTensor(),
-                                    transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
-
-    test_transform = transforms.Compose([
-        transforms.ToTensor(),
-        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
-    ])
-
-    train_data = torchvision.datasets.CIFAR10(root=data_path, train=True, download=True, transform=transform)
-    train_val_indices = [i for i in range(len(train_data)) if train_data[i][1] in classes_to_learn]
-
-    train_size = int(0.8 * len(train_val_indices))
-    train_indices = train_val_indices[:train_size]
-    val_indices = train_val_indices[train_size:]
-
-    train_loader = torch.utils.data.DataLoader(train_data, batch_size=batch_size, persistent_workers=True,
-                                               sampler=SubsetRandomSampler(train_indices))
-    val_loader = torch.utils.data.DataLoader(train_data, batch_size=batch_size, persistent_workers=True,
-                                             sampler=SubsetRandomSampler(val_indices))
-
-    test_data = torchvision.datasets.CIFAR10(root=data_path, train=False, download=True, transform=test_transform)
-    classes_to_test = classes_to_learn + classes_to_dream
-    test_indices = [i for i in range(len(test_data)) if test_data[i][1] in classes_to_test]
-    test_loader = torch.utils.data.DataLoader(test_data, batch_size=batch_size, persistent_workers=True,
-                                              sampler=SubsetRandomSampler(test_indices))
-
     # setup experiment
     mlf_logger = MLFlowLogger(experiment_name=experiment_name, tracking_uri="databricks",
                               run_name=run_name)
 
     dreaming_net = DreamingNet(teacher, student)
+    cifar_data_module = CIFARDataModule(classes_to_learn, classes_to_dream, data_path, batch_size)
+
     # train
     trainer = pl.Trainer(logger=mlf_logger if experiment_run else None, max_epochs=max_epochs)
-    trainer.fit(model=dreaming_net, train_dataloaders=train_loader, val_dataloaders=val_loader)
+    trainer.fit(model=dreaming_net, datamodule=cifar_data_module)
 
     # test
-    trainer.test(dreaming_net, test_loader)
+    trainer.test(dreaming_net, datamodule=cifar_data_module)
 
     # save
-    model_path = os.path.join("trained", f"state_dict_model_{mlf_logger.run_id}.pt")
+    model_path = os.path.join(saved_students_weights, f"state_dict_model_{mlf_logger.run_id}.pt")
     torch.save(dreaming_net.state_dict(), model_path)
     mlf_logger.experiment.log_artifact(mlf_logger.run_id, model_path)
