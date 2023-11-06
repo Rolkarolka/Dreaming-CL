@@ -1,15 +1,20 @@
 import lightning.pytorch as pl
-from torch.utils.data import DataLoader, SubsetRandomSampler
-from torchvision import transforms, datasets
+from torch.utils.data import DataLoader, random_split, ConcatDataset
+from torchvision import transforms
+
+from models.CIFAR10Subset import CIFAR10Subset
+from models.DeepInversion import DeepInversion
 
 
 class CIFARDataModule(pl.LightningDataModule):
-    def __init__(self, classes_to_learn, classes_to_dream, data_dir: str = "./data", batch_size: int = 32):
+    def __init__(self, teacher, classes_to_learn, classes_to_dream, data_dir: str = "./data", batch_size: int = 32):
         super().__init__()
+        self.teacher = teacher
         self.classes_to_learn = classes_to_learn
         self.classes_to_dream = classes_to_dream
         self.data_dir = data_dir
         self.batch_size = batch_size
+
         self.transform = transforms.Compose([transforms.RandomHorizontalFlip(),
                                              transforms.RandomCrop(32, padding=4),
                                              transforms.ToTensor(),
@@ -20,30 +25,28 @@ class CIFARDataModule(pl.LightningDataModule):
             transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
         ])
 
-    def setup(self, stage: str):
-        self.train_data = datasets.CIFAR10(root=self.data_dir, train=True, download=True, transform=self.transform)
-        train_val_indices = [i for i in range(len(self.train_data)) if self.train_data[i][1] in self.classes_to_learn]
+        # datasets
+        self.cifar_data = CIFAR10Subset(root=self.data_dir, filtered_classes=self.classes_to_learn, train=True, download=True, transform=self.transform)
+        self.deep_inversion = DeepInversion(self.batch_size)
+        self.inversed_data = self.deep_inversion.run_inversion(self.teacher, self.classes_to_dream)
+        self.train_val_data = ConcatDataset([self.cifar_data, self.inversed_data])
 
-        train_size = int(0.8 * len(train_val_indices))
-        self.train_indices = train_val_indices[:train_size]
-        self.val_indices = train_val_indices[train_size:]
-
-        self.test_data = datasets.CIFAR10(root=self.data_dir, train=False, download=True, transform=self.test_transform)
         classes_to_test = self.classes_to_learn + self.classes_to_dream
-        self.test_indices = [i for i in range(len(self.test_data)) if self.test_data[i][1] in classes_to_test]
+        self.test_data = CIFAR10Subset(root=self.data_dir, filtered_classes=classes_to_test, train=False, download=True, transform=self.test_transform)
+
+    def setup(self, stage: str):
+        train_size = int(0.8 * len(self.train_val_data))
+        self.train_data, self.val_data = random_split(self.train_val_data, (train_size, len(self.train_val_data) - train_size))
+
 
     def train_dataloader(self):
-        return DataLoader(self.train_data, batch_size=self.batch_size, persistent_workers=True, num_workers=2,
-                          sampler=SubsetRandomSampler(self.train_indices))
+        return DataLoader(self.train_data, batch_size=self.batch_size, persistent_workers=True, num_workers=2)
 
     def val_dataloader(self):
-        return DataLoader(self.train_data, batch_size=self.batch_size, persistent_workers=True, num_workers=2,
-                          sampler=SubsetRandomSampler(self.val_indices))
+        return DataLoader(self.val_data, batch_size=self.batch_size, persistent_workers=True, num_workers=2)
 
     def test_dataloader(self):
-        return DataLoader(self.test_data, batch_size=self.batch_size, persistent_workers=True, num_workers=2,
-                          sampler=SubsetRandomSampler(self.test_indices))
+        return DataLoader(self.test_data, batch_size=self.batch_size, persistent_workers=True, num_workers=2)
 
     def predict_dataloader(self):
-        return DataLoader(self.test_data, batch_size=self.batch_size, persistent_workers=True, num_workers=2,
-                          sampler=SubsetRandomSampler(self.test_indices))
+        return DataLoader(self.test_data, batch_size=self.batch_size, persistent_workers=True, num_workers=2)

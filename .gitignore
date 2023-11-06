@@ -2,5 +2,5 @@ venv/
 .idea/
 data/
 __pycache__/
-deepinversion_cifar10.py
 models/MetricLearningLoss.py
+runs/

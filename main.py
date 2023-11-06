@@ -41,7 +41,7 @@ if __name__ == '__main__':
                               run_name=run_name)
 
     dreaming_net = DreamingNet(teacher, student)
-    cifar_data_module = CIFARDataModule(classes_to_learn, classes_to_dream, data_path, batch_size)
+    cifar_data_module = CIFARDataModule(teacher, classes_to_learn, classes_to_dream, data_path, batch_size)
 
     # train
     trainer = pl.Trainer(logger=mlf_logger if experiment_run else None, max_epochs=max_epochs)
