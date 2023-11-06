@@ -27,9 +27,10 @@ class CIFARDataModule(pl.LightningDataModule):
 
         # datasets
         self.cifar_data = CIFAR10Subset(root=self.data_dir, filtered_classes=self.classes_to_learn, train=True, download=True, transform=self.transform)
-        self.deep_inversion = DeepInversion(self.batch_size)
-        self.inversed_data = self.deep_inversion.run_inversion(self.teacher, self.classes_to_dream)
-        self.train_val_data = ConcatDataset([self.cifar_data, self.inversed_data])
+        # self.deep_inversion = DeepInversion(self.batch_size)
+        # self.inversed_data = self.deep_inversion.run_inversion(self.teacher, self.classes_to_dream)
+        # self.train_val_data = ConcatDataset([self.cifar_data, self.inversed_data])
+        self.train_val_data = self.cifar_data
 
         classes_to_test = self.classes_to_learn + self.classes_to_dream
         self.test_data = CIFAR10Subset(root=self.data_dir, filtered_classes=classes_to_test, train=False, download=True, transform=self.test_transform)
