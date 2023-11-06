@@ -16,5 +16,5 @@ Celem projektu będzie opracowanie metody generacji syntetycznych obrazów dla u
 
 ## Google Cloud Compute Engine instance for tests
 - https://console.cloud.google.com/compute/instances?project=dreamingcl
-- `Create instance`
-- 
+[GCP setup 1](./docs/instance_gcp_setup_1.png)
+[GCP setup 2](./docs/instance_gcp_setup_2.png)

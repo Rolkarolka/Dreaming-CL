@@ -13,7 +13,6 @@ from models.DreamingNet import DreamingNet
 
 if __name__ == '__main__':
     batch_size = 64
-    num_workers = 2
     max_epochs = 10
     classes_to_learn = [3, 4]  # during the next training round
     classes_to_dream = [0, 1, 2]  # what teacher already learned
@@ -29,11 +28,15 @@ if __name__ == '__main__':
 
     # load teacher net
     teacher = models.resnet34()
-    num_ftrs = teacher.fc.in_features
-    teacher.fc = nn.Linear(num_ftrs, len(classes_to_learn) + len(classes_to_dream))
-    checkpoint = torch.load(teacher_weights_path)
-    teacher.load_state_dict(checkpoint)
-    dreaming_net = DreamingNet(teacher, len(classes_to_learn) + len(classes_to_dream))
+    teacher_num_features = teacher.fc.in_features
+    teacher.fc = nn.Linear(teacher_num_features, len(classes_to_dream))
+    teacher_checkpoint = torch.load(teacher_weights_path)
+    teacher.load_state_dict(teacher_checkpoint)
+
+    # create student net
+    student = models.resnet34()
+    student_num_features = student.fc.in_features
+    student.fc = nn.Linear(student_num_features, len(classes_to_dream) + len(classes_to_learn))
 
     # load data
     transform = transforms.Compose([transforms.RandomHorizontalFlip(),
@@ -50,24 +53,25 @@ if __name__ == '__main__':
     train_val_indices = [i for i in range(len(train_data)) if train_data[i][1] in classes_to_learn]
 
     train_size = int(0.8 * len(train_val_indices))
-    train_indices = train_data[:train_size]
-    val_indices = train_data[train_size:]
+    train_indices = train_val_indices[:train_size]
+    val_indices = train_val_indices[train_size:]
 
-    train_loader = torch.utils.data.DataLoader(train_data, batch_size=batch_size, num_workers=2,
+    train_loader = torch.utils.data.DataLoader(train_data, batch_size=batch_size, persistent_workers=True,
                                                sampler=SubsetRandomSampler(train_indices))
-    val_loader = torch.utils.data.DataLoader(train_data, batch_size=batch_size, num_workers=2,
+    val_loader = torch.utils.data.DataLoader(train_data, batch_size=batch_size, persistent_workers=True,
                                              sampler=SubsetRandomSampler(val_indices))
 
     test_data = torchvision.datasets.CIFAR10(root=data_path, train=False, download=True, transform=test_transform)
     classes_to_test = classes_to_learn + classes_to_dream
     test_indices = [i for i in range(len(test_data)) if test_data[i][1] in classes_to_test]
-    test_loader = torch.utils.data.DataLoader(test_data, batch_size=batch_size, num_workers=num_workers,
+    test_loader = torch.utils.data.DataLoader(test_data, batch_size=batch_size, persistent_workers=True,
                                               sampler=SubsetRandomSampler(test_indices))
 
     # setup experiment
     mlf_logger = MLFlowLogger(experiment_name=experiment_name, tracking_uri="databricks",
                               run_name=run_name)
 
+    dreaming_net = DreamingNet(teacher, student)
     # train
     trainer = pl.Trainer(logger=mlf_logger if experiment_run else None, max_epochs=max_epochs)
     trainer.fit(model=dreaming_net, train_dataloaders=train_loader, val_dataloaders=val_loader)
