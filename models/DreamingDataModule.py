@@ -40,13 +40,13 @@ class CIFARDataModule(pl.LightningDataModule):
 
 
     def train_dataloader(self):
-        return DataLoader(self.train_data, batch_size=self.batch_size, persistent_workers=True, num_workers=2)
+        return DataLoader(self.train_data, batch_size=self.batch_size)
 
     def val_dataloader(self):
-        return DataLoader(self.val_data, batch_size=self.batch_size, persistent_workers=True, num_workers=2)
+        return DataLoader(self.val_data, batch_size=self.batch_size)
 
     def test_dataloader(self):
-        return DataLoader(self.test_data, batch_size=self.batch_size, persistent_workers=True, num_workers=2)
+        return DataLoader(self.test_data, batch_size=self.batch_size)
 
     def predict_dataloader(self):
-        return DataLoader(self.test_data, batch_size=self.batch_size, persistent_workers=True, num_workers=2)
+        return DataLoader(self.test_data, batch_size=self.batch_size)
