@@ -6,7 +6,7 @@ Celem projektu będzie opracowanie metody generacji syntetycznych obrazów dla u
 
 ## Prepare environment
 - Install Python version [3.10](https://www.python.org/downloads/release/python-31010/)
-- Create a virtual environment `python -m venv .`
+- Create a virtual environment `python -m venv ./venv/`
 - Go to created environment `venv\Scripts\activate`
 - Install packages `pip install -r requirements.txt`
 - Create account on `https://community.cloud.databricks.com`

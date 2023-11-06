@@ -216,12 +216,12 @@ class DeepInversion:
         student_num_features = net_student.fc.in_features
         net_student.fc = nn.Linear(student_num_features, len(classes_to_dream))
 
-        device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        device = torch.device("cuda:0") if torch.cuda.is_available() else torch.device("cpu")
 
         net_student = net_student.to(device)
         net_teacher = net_teacher.to(device)
 
-        # place holder for inputs
+        # placeholder for inputs
         data_type = torch.float
         inputs = torch.randn((self.batch_size, 3, 32, 32), requires_grad=True, device=device, dtype=data_type)
         targets = torch.LongTensor([random.choice(classes_to_dream) for _ in range(self.batch_size)]).to(device)
