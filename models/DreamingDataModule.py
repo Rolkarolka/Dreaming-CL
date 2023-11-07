@@ -25,15 +25,13 @@ class CIFARDataModule(pl.LightningDataModule):
             transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
         ])
 
+        all_classes = self.classes_to_learn + self.classes_to_dream
         # datasets
-        self.cifar_data = CIFAR10Subset(root=self.data_dir, filtered_classes=self.classes_to_learn, train=True, download=True, transform=self.transform)
-        # self.deep_inversion = DeepInversion(self.batch_size)
-        # self.inversed_data = self.deep_inversion.run_inversion(self.teacher, self.classes_to_dream)
-        # self.train_val_data = ConcatDataset([self.cifar_data, self.inversed_data])
-        self.train_val_data = self.cifar_data
+        self.deep_inversion = DeepInversion(self.batch_size, epochs=2)
+        inversed_data = self.deep_inversion.run_inversion(self.teacher, self.classes_to_dream)
+        self.train_val_data = CIFAR10Subset(root=self.data_dir, classes_to_learn=self.classes_to_learn, all_classes=all_classes, dreamed_data=inversed_data, train=True, download=True, transform=self.transform)
 
-        classes_to_test = self.classes_to_learn + self.classes_to_dream
-        self.test_data = CIFAR10Subset(root=self.data_dir, filtered_classes=classes_to_test, train=False, download=True, transform=self.test_transform)
+        self.test_data = CIFAR10Subset(root=self.data_dir, all_classes=all_classes, train=False, download=True, transform=self.test_transform)
 
     def setup(self, stage: str):
         train_size = int(0.8 * len(self.train_val_data))
@@ -41,13 +39,13 @@ class CIFARDataModule(pl.LightningDataModule):
 
 
     def train_dataloader(self):
-        return DataLoader(self.train_data, batch_size=self.batch_size)
+        return DataLoader(self.train_data, batch_size=self.batch_size, shuffle=True)
 
     def val_dataloader(self):
-        return DataLoader(self.val_data, batch_size=self.batch_size)
+        return DataLoader(self.val_data, batch_size=self.batch_size, shuffle=True)
 
     def test_dataloader(self):
-        return DataLoader(self.test_data, batch_size=self.batch_size)
+        return DataLoader(self.test_data, batch_size=self.batch_size, shuffle=True)
 
     def predict_dataloader(self):
-        return DataLoader(self.test_data, batch_size=self.batch_size)
+        return DataLoader(self.test_data, batch_size=self.batch_size, shuffle=True)

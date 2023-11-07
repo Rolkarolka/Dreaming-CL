@@ -54,9 +54,9 @@ class DeepInversionFeatureHook:
 
 
 class DeepInversion:
-    def __init__(self, batch_size=256, debug_output=False):
+    def __init__(self, batch_size=256, debug_output=True, epochs=2000):
         self.di_lr = 0.1
-        self.epochs = 2000
+        self.epochs = epochs
         self.debug_output = debug_output
         self.competitive_scale = 0.0
         self.di_var_scale = 2.5e-5

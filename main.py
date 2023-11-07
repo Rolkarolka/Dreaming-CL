@@ -17,6 +17,7 @@ if __name__ == '__main__':
     data_path = os.path.join(os.getcwd(), 'data')
     teacher_weights_path = os.path.join(os.getcwd(), 'teacher', 'teacher_resnet34_classes_0_1_2.weights')
     saved_students_weights = os.path.join(os.getcwd(), 'trained')
+    os.makedirs(saved_students_weights, exist_ok=True)
     experiment_name = "/Users/romanowskarolina@gmail.com/DreamingCL"
     tracking_uri = "databricks"
     run_name = input("Enter experiment run name: ")
