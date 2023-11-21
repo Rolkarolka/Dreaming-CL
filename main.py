@@ -8,6 +8,7 @@ import lightning.pytorch as pl
 
 from models.DreamingDataModule import CIFARDataModule
 from models.DreamingNet import DreamingNet
+from utils import embed_imgs, visualize_output_space
 
 if __name__ == '__main__':
     batch_size = 64
@@ -47,9 +48,15 @@ if __name__ == '__main__':
     # train
     trainer = pl.Trainer(logger=mlf_logger if experiment_run else None, max_epochs=max_epochs)
     trainer.fit(model=dreaming_net, datamodule=cifar_data_module)
+    train_batch = cifar_data_module.train_dataloader()
+    teacher_imgs, teacher_embeds, teacher_labels = embed_imgs(teacher, train_batch)
+    student_imgs, student_embeds, student_labels = embed_imgs(student, train_batch)
+    visualize_output_space(teacher_imgs, teacher_embeds, teacher_labels)
+    visualize_output_space(student_imgs, student_embeds, student_labels)
 
     # test
     trainer.test(dreaming_net, datamodule=cifar_data_module)
+
 
     # save
     model_path = os.path.join(saved_students_weights, f"state_dict_model_{mlf_logger.run_id}.pt")
