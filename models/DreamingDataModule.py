@@ -1,5 +1,5 @@
 import lightning.pytorch as pl
-from torch.utils.data import DataLoader, random_split, ConcatDataset
+from torch.utils.data import DataLoader, random_split
 from torchvision import transforms
 
 from models.CIFAR10Subset import CIFAR10Subset
