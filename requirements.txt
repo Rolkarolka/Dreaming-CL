@@ -1,7 +1,7 @@
-torch~=2.1.0
+torch==2.0.1
 mlflow==2.8.0
-torchvision~=0.16.0
-numpy~=1.26.1
+torchvision~=0.15.2
+numpy
 lightning~=2.1.0
 torchmetrics~=1.2.0
 umap-learn
