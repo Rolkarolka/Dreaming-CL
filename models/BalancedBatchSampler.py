@@ -4,7 +4,7 @@ from torch.utils.data import Sampler
 
 class BalancedBatchSampler(Sampler):
     def __init__(self, dataset, num_classes, batch_size):
-        super().__init__()
+        super().__init__(dataset)
         self.batch_size = batch_size
         self.dataset = dataset
         self.num_classes = num_classes
