@@ -31,6 +31,7 @@ class BalancedBatchSampler(Sampler):
             for class_idx in chosen_classes:
                 batch.append(self.indices_per_class[class_idx][0])
                 # del self.indices_per_class[class_idx][0]
+        print(batch)
         return iter(batch)
 
     def __len__(self):
