@@ -31,7 +31,7 @@ class BalancedBatchSampler(Sampler):
             for class_idx in chosen_classes:
                 batch.append(self.indices_per_class[class_idx][0])
                 # del self.indices_per_class[class_idx][0]
-        return batch
+        return iter(batch)
 
     def __len__(self):
         return len(self.dataset) // self.batch_size
