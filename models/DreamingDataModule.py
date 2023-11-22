@@ -31,10 +31,10 @@ class CIFARDataModule(pl.LightningDataModule):
         self.deep_inversion = DeepInversion(self.batch_size)
         inversed_data = self.deep_inversion.run_inversion(self.teacher, self.classes_to_dream)
         self.train_val_data = CIFAR10Subset(root=self.data_dir, classes_to_learn=self.classes_to_learn, all_classes=all_classes, dreamed_data=inversed_data, train=True, download=True, transform=self.transform)
-        self.train_sampler = BalancedBatchSampler(self.train_val_data, num_classes=len(all_classes))
+        self.train_sampler = BalancedBatchSampler(self.train_val_data, num_classes=len(all_classes), batch_size=self.batch_size)
 
         self.test_data = CIFAR10Subset(root=self.data_dir, all_classes=all_classes, train=False, download=True, transform=self.test_transform)
-        self.test_sampler = BalancedBatchSampler(self.test_data, num_classes=len(all_classes))
+        self.test_sampler = BalancedBatchSampler(self.test_data, num_classes=len(all_classes), batch_size=self.batch_size)
 
     def setup(self, stage: str):
         train_size = int(0.8 * len(self.train_val_data))
