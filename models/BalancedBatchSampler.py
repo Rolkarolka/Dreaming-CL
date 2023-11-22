@@ -15,9 +15,9 @@ class BalancedBatchSampler(Sampler):
             self.indices_per_class[label].append(idx)
 
     def __iter__(self):
-        batch = []
         samples_from_class = self.batch_size // self.num_classes
         while True:
+            batch = []
             for class_indices in self.indices_per_class:
                 chosen_indices = np.random.choice(class_indices, samples_from_class, replace=False).tolist()
                 batch += chosen_indices
