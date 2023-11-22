@@ -17,22 +17,21 @@ class BalancedBatchSampler(Sampler):
     def __iter__(self):
         batch = []
         samples_from_class = self.batch_size // self.num_classes
+        while True:
+            for class_indices in self.indices_per_class:
+                chosen_indices = np.random.choice(class_indices, samples_from_class, replace=False).tolist()
+                batch += chosen_indices
+                # for i in sorted(chosen_indices.tolist(), reverse=True):
+                #     del class_indices[i]
 
-        for class_indices in self.indices_per_class:
-            chosen_indices = np.random.choice(class_indices, samples_from_class, replace=False).tolist()
-            batch += chosen_indices
-            # for i in sorted(chosen_indices.tolist(), reverse=True):
-            #     del class_indices[i]
-
-        num_random_samples = self.batch_size - len(batch)
-        print(self.batch_size, len(batch), num_random_samples, self.num_classes)
-        if num_random_samples > 0:
-            chosen_classes = np.random.choice(self.num_classes, num_random_samples, replace=True)
-            for class_idx in chosen_classes.tolist():
-                batch.append(self.indices_per_class[class_idx][0])
-                # del self.indices_per_class[class_idx][0]
-        print(batch)
-        return iter(batch)
+            num_random_samples = self.batch_size - len(batch)
+            print(self.batch_size, len(batch), num_random_samples, self.num_classes)
+            if num_random_samples > 0:
+                chosen_classes = np.random.choice(self.num_classes, num_random_samples, replace=True)
+                for class_idx in chosen_classes.tolist():
+                    batch.append(self.indices_per_class[class_idx][0])
+                    # del self.indices_per_class[class_idx][0]
+            yield iter(batch)
 
     def __len__(self):
         return len(self.dataset) // self.batch_size
