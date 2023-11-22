@@ -5,6 +5,7 @@ import umap
 from matplotlib import pyplot as plt
 from matplotlib.offsetbox import AnnotationBbox, OffsetImage
 import seaborn as sns
+from datetime import datetime
 umap = umap.UMAP(metric="cosine", n_neighbors=100)
 
 def embed_imgs(model, data_loader):
@@ -48,4 +49,5 @@ def visualize_output_space(images, embeddings, labels, example_size = 10):
         ab = AnnotationBbox(OffsetImage(example, zoom=1), (x, y), frameon=True,
                             bboxprops=dict(facecolor=sns.color_palette("hls", 10)[label], boxstyle="round"))
         ax.add_artist(ab)
-    plt.show()
+    # plt.show()
+    plt.savefig(f'umap-{datetime.now()}.png')
