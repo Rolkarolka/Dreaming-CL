@@ -1,5 +1,4 @@
 import numpy as np
-import torch
 from typing import Optional, Callable, List
 
 from torchvision.datasets import CIFAR10

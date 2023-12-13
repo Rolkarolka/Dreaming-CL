@@ -15,22 +15,13 @@ class BalancedBatchSampler(Sampler):
             self.indices_per_class[label].append(idx)
 
     def __iter__(self):
-        samples_from_class = self.batch_size // self.num_classes
         while True:
             batch = []
-            for class_indices in self.indices_per_class:
-                chosen_indices = np.random.choice(class_indices, samples_from_class, replace=False).tolist()
-                batch += chosen_indices
-                # for i in sorted(chosen_indices.tolist(), reverse=True):
-                #     del class_indices[i]
-
-            num_random_samples = self.batch_size - len(batch)
-            if num_random_samples > 0:
-                chosen_classes = np.random.choice(self.num_classes, num_random_samples, replace=True)
-                for class_idx in chosen_classes.tolist():
-                    batch.append(self.indices_per_class[class_idx][0])
-                    # del self.indices_per_class[class_idx][0]
-            print(self.batch_size, len(batch), num_random_samples, self.num_classes)
+            primary_class_name = np.random.randint(len(self.indices_per_class))
+            batch += np.random.choice(self.indices_per_class[primary_class_name], self.batch_size//2, replace=False).tolist()
+            for _ in range(self.batch_size//4):
+                pair_class_name = np.random.randint(len(self.indices_per_class))
+                batch += np.random.choice(self.indices_per_class[pair_class_name], 2, replace=False).tolist()
             yield iter(batch)
 
     def __len__(self):
