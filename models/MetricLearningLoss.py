@@ -11,7 +11,6 @@ class MetricLearningLoss(nn.Module):
     def __call__(self, outputs, labels):
         loss = 0.0
         k = len(labels)
-        # Always at least one pair from the same class
         print(f"Batch contains: {labels.unique(return_counts=True)}")
         print(labels)
         for i in range(len(labels)):

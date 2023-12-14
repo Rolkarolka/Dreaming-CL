@@ -37,7 +37,6 @@ if __name__ == '__main__':
     student = models.resnet34()
     student_num_features = student.fc.in_features
     student.fc = nn.Linear(student_num_features, len(classes_to_dream) + len(classes_to_learn))
-
     # setup experiment
     mlf_logger = MLFlowLogger(experiment_name=experiment_name, tracking_uri="databricks",
                               run_name=run_name)

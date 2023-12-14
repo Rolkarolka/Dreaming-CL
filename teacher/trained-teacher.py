@@ -27,7 +27,6 @@ trainloader = torch.utils.data.DataLoader(train_set, batch_size=batch_size, num_
 # Create a teacher-34 model
 num_ftrs = teacher.fc.in_features
 teacher.fc = nn.Linear(num_ftrs, len(classes_to_learn))
-
 # Define loss function and optimizer
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.SGD(teacher.parameters(), lr=learning_rate, momentum=momentum)
