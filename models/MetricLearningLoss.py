@@ -12,7 +12,7 @@ class MetricLearningLoss(nn.Module):
         loss = 0.0
         k = len(labels)
         print(f"Batch contains: {labels.unique(return_counts=True)}")
-        print(labels)
+
         for i in range(len(labels)):
             for j in range(i + 1, len(labels)):
                 # Calculate Euclidean distance squared between outputs[i] and outputs[j]

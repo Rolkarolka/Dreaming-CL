@@ -17,13 +17,11 @@ class CIFAR10Subset(CIFAR10):
 
         self.classes = [self.classes[i] for i in all_classes]
         self.class_to_idx = {cls: i for i, cls in enumerate(self.classes)}
-        print(self.data[0].shape)
 
         if classes_to_learn:
             data_idx = [i for i, cls_idx in enumerate(self.targets) if cls_idx in classes_to_learn]
             self.targets = [self.targets[i] for i in data_idx] + dreamed_data.tensors[1].tolist()
             dreamed_imgs = dreamed_data.tensors[0].cpu().numpy().transpose([0, 2, 3, 1]).astype('uint8')
-            print(dreamed_imgs.shape)
             self.data = np.concatenate((self.data[data_idx], dreamed_imgs))
         else:
             data_idx = [i for i, cls_idx in enumerate(self.targets) if cls_idx in all_classes]

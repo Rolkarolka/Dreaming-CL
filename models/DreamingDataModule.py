@@ -8,13 +8,14 @@ from models.DeepInversion import DeepInversion
 
 
 class CIFARDataModule(pl.LightningDataModule):
-    def __init__(self, teacher, classes_to_learn, classes_to_dream, data_dir: str = "./data", batch_size: int = 32):
+    def __init__(self, teacher, classes_to_learn, classes_to_dream, data_dir: str = "./data", batch_size: int = 32, num_workers: int = 7):
         super().__init__()
         self.teacher = teacher
         self.classes_to_learn = classes_to_learn
         self.classes_to_dream = classes_to_dream
         self.data_dir = data_dir
         self.batch_size = batch_size
+        self.num_workers = num_workers
 
         self.transform = transforms.Compose([transforms.RandomHorizontalFlip(),
                                              transforms.RandomCrop(32, padding=4),
@@ -43,13 +44,13 @@ class CIFARDataModule(pl.LightningDataModule):
 
 
     def train_dataloader(self):
-        return DataLoader(self.train_data, batch_sampler=self.train_sampler)
+        return DataLoader(self.train_data, batch_sampler=self.train_sampler, num_workers=self.num_workers)
 
     def val_dataloader(self):
-        return DataLoader(self.val_data, batch_sampler=self.val_sampler)
+        return DataLoader(self.val_data, batch_sampler=self.val_sampler, num_workers=self.num_workers)
 
     def test_dataloader(self):
-        return DataLoader(self.test_data, batch_sampler=self.test_sampler)
+        return DataLoader(self.test_data, batch_sampler=self.test_sampler, num_workers=self.num_workers)
 
     def predict_dataloader(self):
-        return DataLoader(self.test_data, batch_sampler=self.test_sampler)
+        return DataLoader(self.test_data, batch_sampler=self.test_sampler, num_workers=self.num_workers)
