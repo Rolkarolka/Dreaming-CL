@@ -238,7 +238,7 @@ class DeepInversion:
         random.shuffle(all_targets)
 
         dreamed_inputs = torch.Tensor()
-        dreamed_targets = torch.Tensor()
+        dreamed_targets = torch.LongTensor()
         i = 0
         while dreamed_targets.numel() < all_probes:
             inputs = torch.randn((self.batch_size, 3, 32, 32), requires_grad=True, device=device, dtype=data_type)
