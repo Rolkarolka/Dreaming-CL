@@ -23,6 +23,7 @@ class BalancedBatchSampler(Sampler):
             for _ in range((self.batch_size-primary_samples_size)//2):
                 pair_class_name = np.random.randint(len(self.indices_per_class))
                 batch += np.random.choice(self.indices_per_class[pair_class_name], 2, replace=False).tolist()
+            print(batch)
             yield iter(batch)
 
     def __len__(self):
