@@ -16,6 +16,7 @@ class BalancedBatchSampler(Sampler):
 
         for idx, samples in enumerate(self.indices_per_class):
             print(idx, len(samples))
+
     def __iter__(self):
         while True:
             batch = []
