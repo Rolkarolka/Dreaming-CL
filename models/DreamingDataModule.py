@@ -33,7 +33,7 @@ class CIFARDataModule(pl.LightningDataModule):
         self.train_val_data = CIFAR10Subset(root=self.data_dir, classes_to_learn=self.classes_to_learn, all_classes=all_classes, dreamed_data=inversed_data, train=True, download=True, transform=self.transform)
         self.train_sampler = BalancedBatchSampler(self.train_val_data, num_classes=len(all_classes), batch_size=self.batch_size)
 
-        loader = DataLoader(self.train_data, batch_sampler=self.train_sampler)
+        loader = DataLoader(self.train_val_data, batch_sampler=self.train_sampler)
         for x, y in loader:
             print(x.shape, y.shape)
 
