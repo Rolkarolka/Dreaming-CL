@@ -30,7 +30,7 @@ class CIFARDataModule(pl.LightningDataModule):
         self.all_classes = self.classes_to_learn + self.classes_to_dream
         # datasets
         class_num_samples = {class_name: 64 for class_name in self.classes_to_dream} # TODO 64 from config and depends on previous datasets
-        self.deep_inversion = DeepInversion(class_num_samples, epochs=200)
+        self.deep_inversion = DeepInversion(class_num_samples)
         inversed_data = self.deep_inversion.run_inversion(self.teacher, self.classes_to_dream)
         self.train_val_data = CIFAR10Subset(root=self.data_dir, classes_to_learn=self.classes_to_learn, all_classes=self.all_classes, dreamed_data=inversed_data, train=True, download=True, transform=self.transform)
 
