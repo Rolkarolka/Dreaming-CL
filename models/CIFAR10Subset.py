@@ -17,7 +17,7 @@ class CIFAR10Subset(CIFAR10):
 
         self.classes = [self.classes[i] for i in all_classes]
         self.class_to_idx = {cls: i for i, cls in enumerate(self.classes)}
-        print(self.data[1].shape)
+        print(self.data[1][0].shape)
         print(dreamed_data[1].shape)
 
         if classes_to_learn:
