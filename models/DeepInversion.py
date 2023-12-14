@@ -255,7 +255,6 @@ class DeepInversion:
 
             dreamed_targets = torch.cat([dreamed_targets, targets.detach()], dim=0)
             dreamed_inputs = torch.cat([dreamed_inputs, inputs.detach()], dim=0)
-            print(dreamed_targets.numel())
-
+            i =+ 1
         dataset = TensorDataset(dreamed_inputs, dreamed_targets)
         return dataset
