@@ -54,7 +54,7 @@ class DeepInversionFeatureHook:
 
 
 class DeepInversion:
-    def __init__(self, class_num_samples, debug_output=True, epochs=2000):
+    def __init__(self, class_num_samples, debug_output=True, epochs=20000):
         self.di_lr = 0.1
         self.epochs = epochs
         self.debug_output = debug_output
@@ -247,7 +247,7 @@ class DeepInversion:
             targets = torch.LongTensor(all_targets[i*self.batch_size: i*self.batch_size+self.batch_size]).to(device)
             optimizer_di = optim.Adam([inputs], lr=self.di_lr)
 
-            print("Starting model inversion")
+            print(f"Starting {i}/{all_probes//self.batch_size} model inversion")
             inputs = self._get_images(net=net_teacher, targets=targets,
                                       net_student=net_student, prefix=prefix,
                                       optimizer=optimizer_di, inputs=inputs,
@@ -256,7 +256,6 @@ class DeepInversion:
             dreamed_targets = torch.cat([dreamed_targets, targets.detach()], dim=0)
             dreamed_inputs = torch.cat([dreamed_inputs, inputs.detach()], dim=0)
             print(dreamed_targets.numel())
-            i += 1
 
         dataset = TensorDataset(dreamed_inputs, dreamed_targets)
         return dataset
