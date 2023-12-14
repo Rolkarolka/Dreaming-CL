@@ -32,4 +32,4 @@ class CIFAR10Subset(CIFAR10):
         return len(self.data)
 
     def __getitem__(self, batch_idx):
-        return self.data[batch_idx]
+        return self.data[batch_idx], self.targets[batch_idx]

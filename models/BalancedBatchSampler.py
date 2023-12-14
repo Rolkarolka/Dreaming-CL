@@ -11,8 +11,7 @@ class BalancedBatchSampler(Sampler):
         self.indices_per_class = [[] for _ in range(num_classes)]
 
         # Organize indices by class
-        for idx, label in enumerate(dataset):
-            print(idx, label)
+        for idx, (_, label) in enumerate(dataset):
             self.indices_per_class[label].append(idx)
 
     def __iter__(self):
