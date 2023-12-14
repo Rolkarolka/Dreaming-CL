@@ -114,7 +114,6 @@ class DeepInversion:
         lim_0, lim_1 = 2, 2
 
         for epoch in range(self.epochs):
-            print(epoch)
             # apply random jitter offsets
             off1 = random.randint(-lim_0, lim_0)
             off2 = random.randint(-lim_1, lim_1)
