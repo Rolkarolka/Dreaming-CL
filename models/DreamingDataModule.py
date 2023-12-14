@@ -26,29 +26,27 @@ class CIFARDataModule(pl.LightningDataModule):
             transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
         ])
 
-        all_classes = self.classes_to_learn + self.classes_to_dream
+        self.all_classes = self.classes_to_learn + self.classes_to_dream
         # datasets
         self.deep_inversion = DeepInversion(self.batch_size, epochs=200)
         inversed_data = self.deep_inversion.run_inversion(self.teacher, self.classes_to_dream)
-        self.train_val_data = CIFAR10Subset(root=self.data_dir, classes_to_learn=self.classes_to_learn, all_classes=all_classes, dreamed_data=inversed_data, train=True, download=True, transform=self.transform)
-        self.train_sampler = BalancedBatchSampler(self.train_val_data, num_classes=len(all_classes), batch_size=self.batch_size)
+        self.train_val_data = CIFAR10Subset(root=self.data_dir, classes_to_learn=self.classes_to_learn, all_classes=self.all_classes, dreamed_data=inversed_data, train=True, download=True, transform=self.transform)
 
-        loader = DataLoader(self.train_val_data, batch_sampler=self.train_sampler)
-        batch = next(iter(loader))
-        print(batch)
-
-        self.test_data = CIFAR10Subset(root=self.data_dir, all_classes=all_classes, train=False, download=True, transform=self.test_transform)
-        self.test_sampler = BalancedBatchSampler(self.test_data, num_classes=len(all_classes), batch_size=self.batch_size)
+        self.test_data = CIFAR10Subset(root=self.data_dir, all_classes=self.all_classes, train=False, download=True, transform=self.test_transform)
+        self.test_sampler = BalancedBatchSampler(self.test_data, num_classes=len(self.all_classes), batch_size=self.batch_size)
 
     def setup(self, stage: str):
         train_size = int(0.8 * len(self.train_val_data))
         self.train_data, self.val_data = random_split(self.train_val_data, (train_size, len(self.train_val_data) - train_size))
+        self.train_sampler = BalancedBatchSampler(self.train_data, num_classes=len(self.all_classes), batch_size=self.batch_size)
+        self.val_sampler = BalancedBatchSampler(self.val_data, num_classes=len(self.all_classes), batch_size=self.batch_size)
+
 
     def train_dataloader(self):
         return DataLoader(self.train_data, batch_sampler=self.train_sampler)
 
     def val_dataloader(self):
-        return DataLoader(self.val_data, batch_sampler=self.train_sampler)
+        return DataLoader(self.val_data, batch_sampler=self.val_sampler)
 
     def test_dataloader(self):
         return DataLoader(self.test_data, batch_sampler=self.test_sampler)
