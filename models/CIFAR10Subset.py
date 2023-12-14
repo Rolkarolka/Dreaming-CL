@@ -29,9 +29,3 @@ class CIFAR10Subset(CIFAR10):
             data_idx = [i for i, cls_idx in enumerate(self.targets) if cls_idx in all_classes]
             self.targets = [self.targets[i] for i in data_idx]
             self.data = self.data[data_idx]
-
-    def __len__(self):
-        return len(self.data)
-
-    def __getitem__(self, batch_idx):
-        return self.data[batch_idx], self.targets[batch_idx]
