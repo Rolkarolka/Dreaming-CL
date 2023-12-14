@@ -40,6 +40,7 @@ class CIFARDataModule(pl.LightningDataModule):
         train_size = int(0.8 * len(self.train_val_data))
         self.train_data, self.val_data = random_split(self.train_val_data, (train_size, len(self.train_val_data) - train_size))
 
+
     def train_dataloader(self):
         return DataLoader(self.train_data, batch_sampler=self.train_sampler)
 
