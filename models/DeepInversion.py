@@ -54,7 +54,7 @@ class DeepInversionFeatureHook:
 
 
 class DeepInversion:
-    def __init__(self, batch_size=256, debug_output=True, epochs=2000):
+    def __init__(self, class_num_samples, debug_output=True, epochs=2000):
         self.di_lr = 0.1
         self.epochs = epochs
         self.debug_output = debug_output
@@ -62,7 +62,8 @@ class DeepInversion:
         self.di_var_scale = 2.5e-5
         self.di_l2_scale = 0.0
         self.r_feature_weight = 1e2
-        self.batch_size = batch_size
+        self.class_num_samples = class_num_samples
+        self.batch_size = 64
         self.exp_descr = "try1"
 
     def _get_images(self, net, device, targets, inputs,
@@ -98,9 +99,6 @@ class DeepInversion:
         net_student.eval()
 
         best_cost = 1e6
-
-        # initialize gaussian inputs
-        inputs.data = torch.randn((self.batch_size, 3, 32, 32), requires_grad=True, device=device)
         # if use_amp:
         #     inputs.data = inputs.data.half()
 
@@ -221,13 +219,6 @@ class DeepInversion:
         net_student = net_student.to(device)
         net_teacher = net_teacher.to(device)
 
-        # placeholder for inputs
-        data_type = torch.float
-        inputs = torch.randn((self.batch_size, 3, 32, 32), requires_grad=True, device=device, dtype=data_type)
-        targets = torch.LongTensor([random.choice(classes_to_dream) for _ in range(self.batch_size)]).to(device)
-
-        optimizer_di = optim.Adam([inputs], lr=self.di_lr)
-
         net_teacher.eval()  # important, otherwise generated images will be non natural
         cudnn.benchmark = True
 
@@ -237,12 +228,35 @@ class DeepInversion:
             if not os.path.exists(create_folder):
                 os.makedirs(create_folder)
 
-        print("Starting model inversion")
 
-        inputs = self._get_images(net=net_teacher, targets=targets,
-                                  net_student=net_student, prefix=prefix,
-                                  optimizer=optimizer_di, inputs=inputs,
-                                  device=device)
+        # placeholder for inputs
+        data_type = torch.float
+        all_probes = sum(list(self.class_num_samples.values()))
+        all_targets = []
+        for key, value in self.class_num_samples.items():
+            all_targets += [key for _ in range(value)]
+        random.shuffle(all_targets)
 
-        dataset = TensorDataset(inputs, targets)
+        dreamed_inputs = torch.Tensor()
+        dreamed_targets = torch.Tensor()
+        i = 0
+        while dreamed_targets.numel() < all_probes:
+            inputs = torch.randn((self.batch_size, 3, 32, 32), requires_grad=True, device=device, dtype=data_type)
+            # targets = torch.LongTensor([random.choice(classes_to_dream) for _ in range(self.batch_size)]).to(device)
+
+            targets = torch.LongTensor(all_targets[i*self.batch_size: i*self.batch_size+self.batch_size]).to(device)
+            optimizer_di = optim.Adam([inputs], lr=self.di_lr)
+
+            print("Starting model inversion")
+            inputs = self._get_images(net=net_teacher, targets=targets,
+                                      net_student=net_student, prefix=prefix,
+                                      optimizer=optimizer_di, inputs=inputs,
+                                      device=device)
+
+            dreamed_targets = torch.cat([dreamed_targets, targets.detach()], dim=0)
+            dreamed_inputs = torch.cat([dreamed_inputs, inputs.detach()], dim=0)
+            print(dreamed_targets.numel())
+            i += 1
+
+        dataset = TensorDataset(dreamed_inputs, dreamed_targets)
         return dataset

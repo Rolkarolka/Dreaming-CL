@@ -56,7 +56,6 @@ if __name__ == '__main__':
     # test
     trainer.test(dreaming_net, datamodule=cifar_data_module)
 
-
     # save
     model_path = os.path.join(saved_students_weights, f"state_dict_model_{mlf_logger.run_id}.pt")
     torch.save(dreaming_net.state_dict(), model_path)
