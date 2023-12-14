@@ -37,6 +37,7 @@ class CIFARDataModule(pl.LightningDataModule):
         self.test_sampler = BalancedBatchSampler(self.test_data, num_classes=len(all_classes), batch_size=self.batch_size)
 
     def setup(self, stage: str):
+        print("train val data", len(self.train_val_data))
         train_size = int(0.8 * len(self.train_val_data))
         self.train_data, self.val_data = random_split(self.train_val_data, (train_size, len(self.train_val_data) - train_size))
 

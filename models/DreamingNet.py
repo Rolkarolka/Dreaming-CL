@@ -21,7 +21,6 @@ class DreamingNet(pl.LightningModule):
 
     def training_step(self, batch, batch_idx):
         x, y = batch
-        print(x,y)
         preds = self.student(x)
         loss = self.loss_fun(preds, y)
         loss += self.metric_loss(preds, y)
