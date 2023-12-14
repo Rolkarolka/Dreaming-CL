@@ -7,7 +7,7 @@ Celem projektu będzie opracowanie metody generacji syntetycznych obrazów dla u
 ## Prepare environment
 - Install Python version [3.10](https://www.python.org/downloads/release/python-31010/)
 - Create a virtual environment `python -m venv ./venv/`
-- Go to created environment `venv\Scripts\activate`
+- Go to created environment `venv\Scripts\activate` or `source venv/bin/activate`
 - Install packages `pip install -r requirements.txt`
 - Create account on `https://community.cloud.databricks.com`
 - Configure databricks access `databricks configure --host https://community.cloud.databricks.com/`
@@ -18,3 +18,5 @@ Celem projektu będzie opracowanie metody generacji syntetycznych obrazów dla u
 - https://console.cloud.google.com/compute/instances?project=dreamingcl
 [GCP setup 1](./docs/instance_gcp_setup_1.png)
 [GCP setup 2](./docs/instance_gcp_setup_2.png)
+- Download git repository
+- Prepare environment as described above

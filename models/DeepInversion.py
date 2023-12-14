@@ -99,9 +99,6 @@ class DeepInversion:
         net_student.eval()
 
         best_cost = 1e6
-        # if use_amp:
-        #     inputs.data = inputs.data.half()
-
         # set up criteria for optimization
         criterion = nn.CrossEntropyLoss()
 
@@ -135,23 +132,22 @@ class DeepInversion:
                 outputs_student = net_student(inputs_jit)
                 T = 3.0
 
-                if 1:
-                    # jensen shanon divergence:
-                    # another way to force KL between negative probabilities
-                    P = F.softmax(outputs_student / T, dim=1)
-                    Q = F.softmax(outputs / T, dim=1)
-                    M = 0.5 * (P + Q)
+                # jensen shanon divergence:
+                # another way to force KL between negative probabilities
+                P = F.softmax(outputs_student / T, dim=1)
+                Q = F.softmax(outputs / T, dim=1)
+                M = 0.5 * (P + Q)
 
-                    P = torch.clamp(P, 0.01, 0.99)
-                    Q = torch.clamp(Q, 0.01, 0.99)
-                    M = torch.clamp(M, 0.01, 0.99)
-                    eps = 0.0
-                    # loss_verifier_cig = 0.5 * kl_loss(F.log_softmax(outputs_verifier / T, dim=1), M) +  0.5 * kl_loss(F.log_softmax(outputs/T, dim=1), M)
-                    loss_verifier_cig = 0.5 * kl_loss(torch.log(P + eps), M) + 0.5 * kl_loss(torch.log(Q + eps), M)
-                    # JS criteria - 0 means full correlation, 1 - means completely different
-                    loss_verifier_cig = 1.0 - torch.clamp(loss_verifier_cig, 0.0, 1.0)
+                P = torch.clamp(P, 0.01, 0.99)
+                Q = torch.clamp(Q, 0.01, 0.99)
+                M = torch.clamp(M, 0.01, 0.99)
+                eps = 0.0
+                # loss_verifier_cig = 0.5 * kl_loss(F.log_softmax(outputs_verifier / T, dim=1), M) +  0.5 * kl_loss(F.log_softmax(outputs/T, dim=1), M)
+                loss_verifier_cig = 0.5 * kl_loss(torch.log(P + eps), M) + 0.5 * kl_loss(torch.log(Q + eps), M)
+                # JS criteria - 0 means full correlation, 1 - means completely different
+                loss_verifier_cig = 1.0 - torch.clamp(loss_verifier_cig, 0.0, 1.0)
 
-                    loss = loss + self.competitive_scale * loss_verifier_cig
+                loss = loss + self.competitive_scale * loss_verifier_cig
 
             # apply total variation regularization
             diff1 = inputs_jit[:, :, :, :-1] - inputs_jit[:, :, :, 1:]
@@ -166,12 +162,10 @@ class DeepInversion:
             loss = loss + self.r_feature_weight * loss_distr  # best for noise before BN
 
             # l2 loss
-            if 1:
-                loss = loss + self.di_l2_scale * torch.norm(inputs_jit, 2)
+            loss = loss + self.di_l2_scale * torch.norm(inputs_jit, 2)
 
             if self.debug_output and epoch % 200 == 0:
-                print(
-                    f"It {epoch}\t Losses: total: {loss.item():3.3f},\ttarget: {loss_target:3.3f} \tR_feature_loss unscaled:\t {loss_distr.item():3.3f}")
+                print(f"It {epoch}\t Losses: total: {loss.item():3.3f},\ttarget: {loss_target:3.3f} \tR_feature_loss unscaled:\t {loss_distr.item():3.3f}")
                 vutils.save_image(inputs.data.clone(),
                                   './{}/output_{}.png'.format(prefix, epoch // 200),
                                   normalize=True, scale_each=True, nrow=10)
@@ -182,7 +176,6 @@ class DeepInversion:
 
             # backward pass
             loss.backward()
-
             optimizer.step()
 
         outputs = net(best_inputs)
@@ -255,6 +248,6 @@ class DeepInversion:
 
             dreamed_targets = torch.cat([dreamed_targets, targets.detach()], dim=0)
             dreamed_inputs = torch.cat([dreamed_inputs, inputs.detach()], dim=0)
-            i =+ 1
+            i += 1
         dataset = TensorDataset(dreamed_inputs, dreamed_targets)
         return dataset
