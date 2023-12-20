@@ -12,6 +12,8 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import random
+
+import matplotlib
 import torch
 import torch.nn as nn
 import torch.backends.cudnn as cudnn
@@ -22,8 +24,13 @@ import os
 import glob
 import collections
 
+from PIL import Image
+from matplotlib import pyplot as plt
 from torch.utils.data import TensorDataset
 from torchvision.models import resnet18
+
+matplotlib.use('TkAgg')
+
 
 class DeepInversionFeatureHook:
     '''
@@ -54,8 +61,9 @@ class DeepInversionFeatureHook:
 
 
 class DeepInversion:
-    def __init__(self, class_num_samples, debug_output=True, epochs=20000):
+    def __init__(self, class_num_samples, logger, debug_output=True, epochs=2000):
         self.di_lr = 0.1
+        self.logger = logger
         self.epochs = epochs
         self.debug_output = debug_output
         self.competitive_scale = 0.0
@@ -165,7 +173,8 @@ class DeepInversion:
             loss = loss + self.di_l2_scale * torch.norm(inputs_jit, 2)
 
             if self.debug_output and epoch % 200 == 0:
-                print(f"It {epoch}\t Losses: total: {loss.item():3.3f},\ttarget: {loss_target:3.3f} \tR_feature_loss unscaled:\t {loss_distr.item():3.3f}")
+                print(
+                    f"It {epoch}\t Losses: total: {loss.item():3.3f},\ttarget: {loss_target:3.3f} \tR_feature_loss unscaled:\t {loss_distr.item():3.3f}")
                 vutils.save_image(inputs.data.clone(),
                                   './{}/output_{}.png'.format(prefix, epoch // 200),
                                   normalize=True, scale_each=True, nrow=10)
@@ -184,10 +193,12 @@ class DeepInversion:
         outputs_student = net_student(best_inputs)
         _, predicted_std = outputs_student.max(1)
 
-        print('Teacher correct out of {}: {}, loss at {}'.format(self.batch_size, predicted_teach.eq(targets).sum().item(),
+        print('Teacher correct out of {}: {}, loss at {}'.format(self.batch_size,
+                                                                 predicted_teach.eq(targets).sum().item(),
                                                                  criterion(outputs, targets).item()))
-        print('Student correct out of {}: {}, loss at {}'.format(self.batch_size, predicted_std.eq(targets).sum().item(),
-                                                                 criterion(outputs_student, targets).item()))
+        print(
+            'Student correct out of {}: {}, loss at {}'.format(self.batch_size, predicted_std.eq(targets).sum().item(),
+                                                               criterion(outputs_student, targets).item()))
 
         name_use = "best_images"
         if prefix is not None:
@@ -221,7 +232,6 @@ class DeepInversion:
             if not os.path.exists(create_folder):
                 os.makedirs(create_folder)
 
-
         # placeholder for inputs
         data_type = torch.float
         all_probes = sum(list(self.class_num_samples.values()))
@@ -237,10 +247,11 @@ class DeepInversion:
             inputs = torch.randn((self.batch_size, 3, 32, 32), requires_grad=True, device=device, dtype=data_type)
             # targets = torch.LongTensor([random.choice(classes_to_dream) for _ in range(self.batch_size)]).to(device)
 
-            targets = torch.LongTensor(all_targets[i*self.batch_size: i*self.batch_size+self.batch_size]).to(device)
+            targets = torch.LongTensor(all_targets[i * self.batch_size: i * self.batch_size + self.batch_size]).to(
+                device)
             optimizer_di = optim.Adam([inputs], lr=self.di_lr)
 
-            print(f"Starting {i}/{all_probes//self.batch_size} model inversion")
+            print(f"Starting {i}/{all_probes // self.batch_size} model inversion")
             inputs = self._get_images(net=net_teacher, targets=targets,
                                       net_student=net_student, prefix=prefix,
                                       optimizer=optimizer_di, inputs=inputs,
@@ -249,5 +260,16 @@ class DeepInversion:
             dreamed_targets = torch.cat([dreamed_targets, targets.detach()], dim=0)
             dreamed_inputs = torch.cat([dreamed_inputs, inputs.detach()], dim=0)
             i += 1
+
+        num_class_probs = 5
+        for class_name in classes_to_dream:
+            class_indices = torch.nonzero(dreamed_targets == class_name).squeeze()
+            random_indices = random.sample(class_indices.tolist(), min(num_class_probs, len(class_indices)))
+            grid = vutils.make_grid(dreamed_inputs[random_indices], normalize=True, scale_each=True, nrow=5)
+            ndarr = grid.mul(255).add_(0.5).clamp_(0, 255).permute(1, 2, 0).to("cpu", torch.uint8).numpy()
+            fig = plt.figure()
+            plt.imshow(ndarr)
+            self.logger.experiment.log_figure(self.logger.run_id, fig, f"dreamed_class_target_{class_name}.png")
+
         dataset = TensorDataset(dreamed_inputs, dreamed_targets)
         return dataset

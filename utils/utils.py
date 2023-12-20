@@ -21,7 +21,7 @@ def embed_imgs(model, data_loader):
     return (torch.cat(img_list, dim=0), torch.cat(embed_list, dim=0), torch.cat(labels, dim=0))
 
 
-def visualize_output_space(images, embeddings, labels, example_size = 10):
+def visualize_output_space(mlf_logger, images, embeddings, labels, step="train", example_size = 10):
     train_embedded = umap.fit_transform(embeddings)
     data = pd.DataFrame(train_embedded)
     data["label"] = labels
@@ -49,5 +49,5 @@ def visualize_output_space(images, embeddings, labels, example_size = 10):
         ab = AnnotationBbox(OffsetImage(example, zoom=1), (x, y), frameon=True,
                             bboxprops=dict(facecolor=sns.color_palette("hls", 10)[label], boxstyle="round"))
         ax.add_artist(ab)
-    # plt.show()
     plt.savefig(f'umap-{datetime.now()}.png')
+    mlf_logger.log_figure(mlf_logger.run_id, fig, f"output_space_{step}.png")

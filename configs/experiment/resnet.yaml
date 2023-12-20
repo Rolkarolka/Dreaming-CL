@@ -1,0 +1,16 @@
+defaults:
+  - resnet_schema
+
+batch_size: 64
+max_epochs: 10
+classes_to_learn:
+  - 3
+  - 4
+classes_to_dream:
+  - 0
+  - 1
+  - 2
+experiment_run: True
+name: "/Users/romanowskarolina@gmail.com/DreamingCL"
+tracking_uri: "databricks"
+run_name: "test"

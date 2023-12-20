@@ -1,0 +1,3 @@
+defaults:
+  - config_schema
+  - experiment: resnet
