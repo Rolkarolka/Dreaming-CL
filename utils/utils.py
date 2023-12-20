@@ -49,5 +49,5 @@ def visualize_output_space(mlf_logger, images, embeddings, labels, step="train",
         ab = AnnotationBbox(OffsetImage(example, zoom=1), (x, y), frameon=True,
                             bboxprops=dict(facecolor=sns.color_palette("hls", 10)[label], boxstyle="round"))
         ax.add_artist(ab)
-    plt.savefig(f'umap-{datetime.now()}.png')
+    # plt.savefig(f'umap-{datetime.now()}.png')
     mlf_logger.log_figure(mlf_logger.run_id, fig, f"output_space_{step}.png")
