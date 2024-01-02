@@ -1,17 +1,28 @@
 import lightning.pytorch as pl
+import os
+
+import torch
+import csv
 from torch import optim
 import torch.nn as nn
 import torchmetrics
+from torchvision import models
 
 from models.MetricLearningLoss import MetricLearningLoss
+from utils.utils import embed_imgs, visualize_output_space
 
 
 class DreamingNet(pl.LightningModule):
-    def __init__(self, teacher, student, learning_rate=0.1):
+    def __init__(
+            self,
+            classes_to_dream,
+            classes_to_learn,
+            learning_rate=0.1
+    ):
         super().__init__()
-        self.teacher = teacher
-        self.student = student
-        num_classes = student.fc.out_features
+        self.teacher, self.teacher_class_proportion  = self.load_teacher_net(len(classes_to_dream))
+        self.student = self.load_student_net(len(classes_to_dream) + len(classes_to_learn))
+        num_classes = self.student.fc.out_features
         self.loss_fun = nn.CrossEntropyLoss()
         self.metric_loss = MetricLearningLoss()
         self.learning_rate = learning_rate
@@ -52,5 +63,45 @@ class DreamingNet(pl.LightningModule):
     def on_fit_start(self):
         self.logger.log_hyperparams({"learning rate": self.learning_rate, "loss function": self.loss_fun.__class__})
         # self.logger.log_graph(self.classifier)
+
+    def load_teacher_net(self, num_classes):
+        teacher = models.resnet34()
+        teacher_weights_path = os.path.join(os.getcwd(), "utils", 'teacher', 'teacher_resnet34_classes_0_1_2.weights')
+        teacher_num_features = teacher.fc.in_features
+        teacher.fc = nn.Linear(teacher_num_features, num_classes)
+        teacher_checkpoint = torch.load(teacher_weights_path)
+        teacher.load_state_dict(teacher_checkpoint)
+
+        teacher_class_proportion_path = os.path.join(os.getcwd(), "utils", 'teacher', 'dataset_info.csv')
+        class_num_samples = self.csv_to_dict(teacher_class_proportion_path)
+        return teacher, class_num_samples
+
+    def csv_to_dict(self, file_path):
+        data = {}
+        with open(file_path, 'r') as csvfile:
+            reader = csv.DictReader(csvfile)
+            for row in reader:
+                data[int(row["class_name"])] = int(row["amount_samples"])
+        return data
+
+    def load_student_net(self, num_classes):
+        student = models.resnet34()
+        student_num_features = student.fc.in_features
+        student.fc = nn.Linear(student_num_features, num_classes)
+        return student
+
+    def visualize(self, cifar_data_module):
+        train_batch = cifar_data_module.train_dataloader()
+        teacher_imgs, teacher_embeds, teacher_labels = embed_imgs(self.teacher, train_batch)
+        student_imgs, student_embeds, student_labels = embed_imgs(self.student, train_batch)
+        visualize_output_space(self.logger, teacher_imgs, teacher_embeds, teacher_labels, step="train_teacher")
+        visualize_output_space(self.logger, student_imgs, student_embeds, student_labels, step="train_student")
+
+    def save(self):
+        saved_students_weights = os.path.join(os.getcwd(), 'trained')
+        os.makedirs(saved_students_weights, exist_ok=True)
+        model_path = os.path.join(saved_students_weights, f"state_dict_model_{self.logger.run_id}.pt")
+        torch.save(self.student.state_dict(), model_path)
+        self.logger.log_artifact(self.logger.run_id, model_path)
 
 

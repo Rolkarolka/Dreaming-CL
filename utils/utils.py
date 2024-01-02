@@ -5,7 +5,6 @@ import umap
 from matplotlib import pyplot as plt
 from matplotlib.offsetbox import AnnotationBbox, OffsetImage
 import seaborn as sns
-from datetime import datetime
 umap = umap.UMAP(metric="cosine", n_neighbors=100)
 
 def embed_imgs(model, data_loader):

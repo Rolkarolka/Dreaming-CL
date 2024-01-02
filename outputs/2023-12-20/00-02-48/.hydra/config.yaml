@@ -1,4 +1,0 @@
-experiment:
-  batch_size: 64
-  max_epochs: 10
-  name: /Users/romanowskarolina@gmail.com/DreamingCL

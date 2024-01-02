@@ -10,7 +10,7 @@ classes_to_dream:
   - 0
   - 1
   - 2
-experiment_run: True
-name: "/Users/romanowskarolina@gmail.com/DreamingCL"
-tracking_uri: "databricks"
-run_name: "test"
+experiment_run: true
+name: /Users/romanowskarolina@gmail.com/DreamingCL
+tracking_uri: databricks
+run_name: test

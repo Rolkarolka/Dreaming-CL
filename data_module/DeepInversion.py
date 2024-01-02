@@ -24,7 +24,6 @@ import os
 import glob
 import collections
 
-from PIL import Image
 from matplotlib import pyplot as plt
 from torch.utils.data import TensorDataset
 from torchvision.models import resnet18
@@ -61,18 +60,31 @@ class DeepInversionFeatureHook:
 
 
 class DeepInversion:
-    def __init__(self, class_num_samples, logger, debug_output=True, epochs=2000):
-        self.di_lr = 0.1
+    def __init__(
+            self,
+            class_num_samples,
+            logger,
+            debug_output=True,
+            epochs=2000,
+            di_lr=0.1,
+            competitive_scale=0.0,
+            di_var_scale=2.5e-5,
+            di_l2_scale=0.0,
+            r_feature_weight=1e2,
+            batch_size=64,
+            exp_descr="try1"
+    ):
+        self.di_lr = di_lr
         self.logger = logger
         self.epochs = epochs
         self.debug_output = debug_output
-        self.competitive_scale = 0.0
-        self.di_var_scale = 2.5e-5
-        self.di_l2_scale = 0.0
-        self.r_feature_weight = 1e2
+        self.competitive_scale = competitive_scale
+        self.di_var_scale = di_var_scale
+        self.di_l2_scale = di_l2_scale
+        self.r_feature_weight = r_feature_weight
         self.class_num_samples = class_num_samples
-        self.batch_size = 64
-        self.exp_descr = "try1"
+        self.batch_size = batch_size
+        self.exp_descr = exp_descr
 
     def _get_images(self, net, device, targets, inputs,
                     net_student=None, prefix=None,

@@ -3,7 +3,11 @@ import torch.nn as nn
 
 
 class MetricLearningLoss(nn.Module):
-    def __init__(self, sigma=0.2, omega=1.0):
+    def __init__(
+        self,
+        sigma=0.2,
+        omega=1.0
+    ):
         super(MetricLearningLoss, self).__init__()
         self.sigma = sigma
         self.omega = omega
