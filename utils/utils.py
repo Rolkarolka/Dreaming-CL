@@ -5,6 +5,7 @@ import umap
 from matplotlib import pyplot as plt
 from matplotlib.offsetbox import AnnotationBbox, OffsetImage
 import seaborn as sns
+import os
 umap = umap.UMAP(metric="cosine", n_neighbors=100)
 
 def embed_imgs(model, data_loader):
@@ -48,5 +49,6 @@ def visualize_output_space(mlf_logger, images, embeddings, labels, step="train",
         ab = AnnotationBbox(OffsetImage(example, zoom=1), (x, y), frameon=True,
                             bboxprops=dict(facecolor=sns.color_palette("hls", 10)[label], boxstyle="round"))
         ax.add_artist(ab)
-    # plt.savefig(f'umap-{datetime.now()}.png')
-    mlf_logger.log_figure(mlf_logger.run_id, fig, f"output_space_{step}.png")
+    img_path = os.path.join(os.getcwd(), 'trained', f'output_space_{step}.png')
+    plt.savefig(img_path)
+    mlf_logger.log_artifact(mlf_logger.run_id, img_path)
