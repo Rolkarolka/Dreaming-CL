@@ -5,6 +5,7 @@ import hydra
 import lightning.pytorch as pl
 from lightning.pytorch.loggers import MLFlowLogger
 from omegaconf import DictConfig
+from typing import List
 
 from hydra.core.config_store import ConfigStore
 
@@ -23,8 +24,8 @@ class ExperimentSchema:
 
 @dataclass
 class ResnetExperimentSchema(ExperimentSchema):
-    classes_to_learn: list[int]
-    classes_to_dream: list[int]
+    classes_to_learn: List[int]
+    classes_to_dream: List[int]
 
 
 @dataclass
