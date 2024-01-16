@@ -52,12 +52,12 @@ class CIFARDataModule(pl.LightningDataModule):
         max_number_of_dreamed_imgs = 1000
         samples_to_dream = {}
         for dreamed_class in self.teacher_class_proportion:
-            num_samples = dreamed_class/sum(self.teacher_class_proportion.values()) * max_number_of_dreamed_imgs
-            samples_to_dream[dreamed_class] = num_samples
+            num_samples = self.teacher_class_proportion[dreamed_class]/sum(self.teacher_class_proportion.values()) * max_number_of_dreamed_imgs
+            samples_to_dream[dreamed_class] = int(num_samples)
         return samples_to_dream
 
     def get_class_importance(self):
-        all_samples = sum(self.teacher_class_proportion.values()) + self.train_val_data
+        pass
 
 
     def setup(self, stage: str):
