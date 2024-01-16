@@ -28,7 +28,6 @@ from matplotlib import pyplot as plt
 from torch.utils.data import TensorDataset
 from torchvision.models import resnet18
 
-matplotlib.use('TkAgg')
 
 
 class DeepInversionFeatureHook:
