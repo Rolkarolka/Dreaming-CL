@@ -282,7 +282,7 @@ class DeepInversion:
             # plt.imshow(ndarr)
             img_path = os.path.join(os.getcwd(), 'trained', f"dreamed_class_target_{class_name}.png")
             matplotlib.image.imsave(img_path, ndarr)
-            self.logger.log_image(ndarr,  f"dreamed_class_target_{class_name}.png")
+            self.logger.experiment.log_artifact(self.logger.run_id,  img_path)
 
         dataset = TensorDataset(dreamed_inputs, dreamed_targets)
         return dataset
