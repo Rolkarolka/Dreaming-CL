@@ -102,6 +102,6 @@ class DreamingNet(pl.LightningModule):
         os.makedirs(saved_students_weights, exist_ok=True)
         model_path = os.path.join(saved_students_weights, f"state_dict_model_{self.logger.run_id}.pt")
         torch.save(self.student.state_dict(), model_path)
-        self.logger.log_artifact(self.logger.run_id, model_path)
+        self.logger.experiment.log_artifact(self.logger.run_id, model_path)
 
 
