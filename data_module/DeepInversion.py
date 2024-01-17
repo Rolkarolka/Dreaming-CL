@@ -140,11 +140,7 @@ class DeepInversion:
             # foward with jit images
             optimizer.zero_grad()
             net.zero_grad()
-            print(inputs_jit.shape, targets.shape)
-            print(net)
-            print(targets)
             outputs = net(inputs_jit)
-            print(outputs.shape)
             loss = criterion(outputs, targets)
             loss_target = loss.item()
 
