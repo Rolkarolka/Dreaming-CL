@@ -22,6 +22,7 @@ import torchvision.utils as vutils
 import os
 import glob
 import collections
+import matplotlib
 
 from matplotlib import pyplot as plt
 from torch.utils.data import TensorDataset
@@ -280,7 +281,7 @@ class DeepInversion:
             # fig = plt.figure()
             # plt.imshow(ndarr)
             img_path = os.path.join(os.getcwd(), 'trained', f"dreamed_class_target_{class_name}.png")
-            plt.savefig(ndarr)
+            matplotlib.image.imsave('name.png', ndarr)
             self.logger.log_artifact(self.logger.run_id, img_path)
 
         dataset = TensorDataset(dreamed_inputs, dreamed_targets)
