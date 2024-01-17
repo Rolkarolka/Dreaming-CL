@@ -13,7 +13,6 @@ from __future__ import unicode_literals
 
 import random
 
-import matplotlib
 import torch
 import torch.nn as nn
 import torch.backends.cudnn as cudnn
@@ -141,7 +140,10 @@ class DeepInversion:
             # foward with jit images
             optimizer.zero_grad()
             net.zero_grad()
+            print(inputs_jit.shape, targets.shape)
+            print(targets)
             outputs = net(inputs_jit)
+            print(outputs.shape)
             loss = criterion(outputs, targets)
             loss_target = loss.item()
 

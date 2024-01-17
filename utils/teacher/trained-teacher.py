@@ -36,7 +36,6 @@ if __name__ == '__main__':
     for epoch in range(num_epochs):
         running_loss = 0.0
         for inputs, labels in trainloader:
-            print(inputs.shape)
             optimizer.zero_grad()
             outputs = teacher(inputs)
             loss = criterion(outputs, labels)
