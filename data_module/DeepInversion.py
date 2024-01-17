@@ -278,8 +278,6 @@ class DeepInversion:
             random_indices = random.sample(class_indices.tolist(), min(num_class_probs, len(class_indices)))
             grid = vutils.make_grid(dreamed_inputs[random_indices], normalize=True, scale_each=True, nrow=5)
             ndarr = grid.mul(255).add_(0.5).clamp_(0, 255).permute(1, 2, 0).to("cpu", torch.uint8).numpy()
-            # fig = plt.figure()
-            # plt.imshow(ndarr)
             img_path = os.path.join(os.getcwd(), 'trained', f"dreamed_class_target_{class_name}.png")
             matplotlib.image.imsave(img_path, ndarr)
             self.logger.experiment.log_artifact(self.logger.run_id,  img_path)

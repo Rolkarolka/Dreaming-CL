@@ -51,4 +51,4 @@ def visualize_output_space(mlf_logger, images, embeddings, labels, step="train",
         ax.add_artist(ab)
     img_path = os.path.join(os.getcwd(), 'trained', f'output_space_{step}.png')
     plt.savefig(img_path)
-    mlf_logger.log_artifact(mlf_logger.run_id, img_path)
+    mlf_logger.experiment.log_artifact(mlf_logger.run_id, img_path)
