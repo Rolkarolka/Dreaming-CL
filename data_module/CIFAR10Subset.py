@@ -16,7 +16,7 @@ class CIFAR10Subset(CIFAR10):
                  download: bool = False):
         super().__init__(root=root, train=train, transform=transform, download=download)
 
-        class_importance = self.get_class_importance(self, classes_to_learn, teacher_class_proportion)
+        # class_importance = self.get_class_importance(self, classes_to_learn, teacher_class_proportion)
 
         self.classes = [self.classes[i] for i in all_classes]
         self.class_to_idx = {cls: i for i, cls in enumerate(self.classes)}

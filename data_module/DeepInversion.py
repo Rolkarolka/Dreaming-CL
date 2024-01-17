@@ -64,7 +64,7 @@ class DeepInversion:
             class_num_samples,
             logger,
             debug_output=True,
-            epochs=2000,
+            epochs=400,
             di_lr=0.1,
             competitive_scale=0.0,
             di_var_scale=2.5e-5,
