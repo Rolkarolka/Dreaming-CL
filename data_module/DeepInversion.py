@@ -141,6 +141,7 @@ class DeepInversion:
             optimizer.zero_grad()
             net.zero_grad()
             print(inputs_jit.shape, targets.shape)
+            print(net)
             print(targets)
             outputs = net(inputs_jit)
             print(outputs.shape)
