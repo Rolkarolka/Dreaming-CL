@@ -267,8 +267,8 @@ class DeepInversion:
                                       optimizer=optimizer_di, inputs=inputs,
                                       device=device)
 
-            dreamed_targets = torch.cat([dreamed_targets, targets.detach()], dim=0)
-            dreamed_inputs = torch.cat([dreamed_inputs, inputs.detach()], dim=0)
+            dreamed_targets = torch.cat([dreamed_targets, targets.detach().cpu()], dim=0)
+            dreamed_inputs = torch.cat([dreamed_inputs, inputs.detach().cpu()], dim=0)
             i += 1
 
         num_class_probs = 5
