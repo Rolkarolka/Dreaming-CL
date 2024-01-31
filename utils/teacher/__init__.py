@@ -1,1 +1,1 @@
-from resnet_model import ResNet50
+from utils.teacher.resnet_model import ResNet50
