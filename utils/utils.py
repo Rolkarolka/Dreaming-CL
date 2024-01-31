@@ -10,14 +10,16 @@ umap = umap.UMAP(metric="cosine", n_neighbors=100)
 
 def embed_imgs(model, data_loader):
     img_list, embed_list = [], []
+    device = torch.device("cuda:0") if torch.cuda.is_available() else torch.device("cpu")
     model.eval()
     labels = []
-    for imgs, label in data_loader:
+    for inputs, targets in data_loader:
+        inputs = inputs.to(device)
         with torch.no_grad():
-          z = model(imgs)
-        img_list.append(imgs)
-        embed_list.append(z)
-        labels.append(label)
+            preds = model(inputs)
+        img_list.append(inputs.cpu())
+        embed_list.append(preds.cpu())
+        labels.append(targets)
     return (torch.cat(img_list, dim=0), torch.cat(embed_list, dim=0), torch.cat(labels, dim=0))
 
 

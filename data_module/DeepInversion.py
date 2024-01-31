@@ -64,11 +64,11 @@ class DeepInversion:
             logger,
             debug_output=True,
             epochs=2000,
-            di_lr=1.0, #{1:0; 5:0; 10:0; 100:0} TODO adaptive learning rate
+            di_lr=0.05, #{1:0; 5:0; 10:0; 100:0} TODO adaptive learning rate
             competitive_scale=10.0,
             di_var_scale=2.5e-5,
             di_l2_scale=3e-8,
-            r_feature_weight=1e2,
+            di_r_feature=5.0,
             batch_size=64,
     ):
         self.di_lr = di_lr
@@ -78,7 +78,7 @@ class DeepInversion:
         self.competitive_scale = competitive_scale
         self.di_var_scale = di_var_scale
         self.di_l2_scale = di_l2_scale
-        self.r_feature_weight = r_feature_weight
+        self.di_r_feature = di_r_feature
         self.class_num_samples = class_num_samples
         self.batch_size = batch_size
 
@@ -175,7 +175,7 @@ class DeepInversion:
 
             # R_feature loss
             loss_distr = sum([mod.r_feature for mod in loss_r_feature_layers])
-            loss = loss + self.r_feature_weight * loss_distr  # best for noise before BN
+            loss = loss + self.di_r_feature * loss_distr  # best for noise before BN
 
             # l2 loss
             loss = loss + self.di_l2_scale * torch.norm(inputs_jit, 2)
