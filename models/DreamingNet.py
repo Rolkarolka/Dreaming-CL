@@ -10,6 +10,7 @@ from torchvision import models
 
 from models.MetricLearningLoss import MetricLearningLoss
 from utils.utils import embed_imgs, visualize_output_space
+from utils.teacher.resnet_model import ResNet50
 
 
 class DreamingNet(pl.LightningModule):
@@ -20,7 +21,7 @@ class DreamingNet(pl.LightningModule):
             learning_rate=0.1
     ):
         super().__init__()
-        self.teacher, self.teacher_class_proportion  = self.load_teacher_net(len(classes_to_dream))
+        self.teacher, self.teacher_class_proportion = self.load_teacher_net(len(classes_to_dream))
         self.student = self.load_student_net(len(classes_to_dream) + len(classes_to_learn))
         num_classes = self.student.fc.out_features
         self.loss_fun = nn.CrossEntropyLoss()
@@ -65,7 +66,7 @@ class DreamingNet(pl.LightningModule):
         # self.logger.log_graph(self.classifier)
 
     def load_teacher_net(self, num_classes):
-        teacher = models.resnet34()
+        teacher = ResNet50(num_classes)
         teacher_weights_path = os.path.join(os.getcwd(), "utils", 'teacher', 'teacher_resnet34_classes_0_1_2.weights')
         teacher_num_features = teacher.fc.in_features
         teacher.fc = nn.Linear(teacher_num_features, num_classes)
@@ -85,7 +86,7 @@ class DreamingNet(pl.LightningModule):
         return data
 
     def load_student_net(self, num_classes):
-        student = models.resnet34()
+        student = ResNet50(num_classes)
         student_num_features = student.fc.in_features
         student.fc = nn.Linear(student_num_features, num_classes)
         return student
