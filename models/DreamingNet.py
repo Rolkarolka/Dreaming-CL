@@ -23,7 +23,7 @@ class DreamingNet(pl.LightningModule):
         super().__init__()
         self.teacher, self.teacher_class_proportion = self.load_teacher_net(len(classes_to_dream))
         self.student = self.load_student_net(len(classes_to_dream) + len(classes_to_learn))
-        num_classes = self.student.linear.out_features
+        num_classes = len(classes_to_dream) + len(classes_to_learn)
         self.loss_fun = nn.CrossEntropyLoss()
         self.metric_loss = MetricLearningLoss()
         self.learning_rate = learning_rate
