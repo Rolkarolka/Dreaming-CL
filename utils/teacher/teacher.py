@@ -220,4 +220,4 @@ if __name__ == '__main__':
 
     print('Finished Training')
     classes = '_'.join([f"{i}" for i in classes_to_learn])
-    torch.save(net.state_dict(), f"teacher_new_{net.__class__}_classes_{classes}.weights")
+    torch.save(net.state_dict(), f"teacher_new_{net.__class__.__name__}_classes_{classes}.weights")
