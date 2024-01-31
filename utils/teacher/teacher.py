@@ -2,13 +2,12 @@
 import torch
 import torch.nn as nn
 import torch.optim as optim
-import torch.nn.functional as F
 import torch.backends.cudnn as cudnn
 from torch.utils.data import Subset, SubsetRandomSampler
 
 import torchvision
 import torchvision.transforms as transforms
-from utils.teacher.resnet_model import ResNet50
+from resnet_model import ResNet50
 import os
 
 
