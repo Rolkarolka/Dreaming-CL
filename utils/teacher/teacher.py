@@ -220,4 +220,4 @@ for epoch in range(num_epochs):
 
 print('Finished Training')
 classes = '_'.join([f"{i}" for i in classes_to_learn])
-torch.save(net.state_dict(), f"teacher_{net.__class__}_classes_{classes}.weights")
+torch.save(net.state_dict(), f"teacher_new_{net.__class__}_classes_{classes}.weights")
