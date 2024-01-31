@@ -15,6 +15,7 @@ def embed_imgs(model, data_loader):
     labels = []
     for inputs, targets in data_loader:
         inputs = inputs.to(device)
+        model.to(device)
         with torch.no_grad():
             preds = model(inputs)
         img_list.append(inputs.cpu())
