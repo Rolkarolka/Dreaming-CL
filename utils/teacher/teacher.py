@@ -170,7 +170,7 @@ if __name__ == '__main__':
     lr = 0.1
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     best_acc = 0  # best test accuracy
-    num_epochs = 200
+    num_epochs = 50
     batch_size = 64
     classes_to_learn = [0, 1, 2]
 
