@@ -63,8 +63,8 @@ class DeepInversion:
             class_num_samples,
             logger,
             debug_output=True,
-            epochs=400,
-            di_lr=5.0, #{1:0; 5:0; 10:0; 100:0} TODO adaptive learning rate
+            epochs=2000,
+            di_lr=1.0, #{1:0; 5:0; 10:0; 100:0} TODO adaptive learning rate
             competitive_scale=10.0,
             di_var_scale=2.5e-5,
             di_l2_scale=3e-8,
