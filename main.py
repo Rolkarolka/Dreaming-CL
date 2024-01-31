@@ -12,6 +12,7 @@ from hydra.core.config_store import ConfigStore
 from data_module.DreamingDataModule import CIFARDataModule
 from models.DreamingNet import DreamingNet
 
+
 @dataclass
 class ExperimentSchema:
     batch_size: int
@@ -43,9 +44,12 @@ def main(config: DictConfig) -> None:
     experiment = config.experiment
     data_path = os.path.join(os.getcwd(), 'data')
 
-    mlf_logger = MLFlowLogger(experiment_name=experiment.name, tracking_uri=experiment.tracking_uri, run_name=experiment.run_name)
+    mlf_logger = MLFlowLogger(experiment_name=experiment.name, tracking_uri=experiment.tracking_uri,
+                              run_name=experiment.run_name)
     dreaming_net = DreamingNet(experiment.classes_to_dream, experiment.classes_to_learn)
-    cifar_data_module = CIFARDataModule(dreaming_net.teacher, dreaming_net.teacher_class_proportion, experiment.classes_to_learn, experiment.classes_to_dream, mlf_logger, data_path, experiment.batch_size)
+    cifar_data_module = CIFARDataModule(dreaming_net.teacher, dreaming_net.teacher_class_proportion,
+                                        experiment.classes_to_learn, experiment.classes_to_dream, mlf_logger, data_path,
+                                        experiment.batch_size)
     trainer = pl.Trainer(logger=mlf_logger if experiment.experiment_run else None, max_epochs=experiment.max_epochs)
     trainer.fit(model=dreaming_net, datamodule=cifar_data_module)
 
