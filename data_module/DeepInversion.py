@@ -267,13 +267,17 @@ class DeepInversion:
             dreamed_inputs = torch.cat([dreamed_inputs, inputs.detach().cpu()], dim=0)
             i += 1
 
+        trained_grid_path = os.path.join(os.getcwd(), 'trained')
+        if not os.path.isdir(trained_grid_path):
+            os.makedirs(trained_grid_path)
+
         num_class_probs = 5
         for class_name in classes_to_dream:
             class_indices = torch.nonzero(dreamed_targets == class_name).squeeze()
             random_indices = random.sample(class_indices.tolist(), min(num_class_probs, len(class_indices)))
             grid = vutils.make_grid(dreamed_inputs[random_indices], normalize=True, scale_each=True, nrow=5)
             ndarr = grid.mul(255).add_(0.5).clamp_(0, 255).permute(1, 2, 0).to("cpu", torch.uint8).numpy()
-            img_path = os.path.join(os.getcwd(), 'trained', f"dreamed_class_target_{class_name}.png")
+            img_path = os.path.join(trained_grid_path, f"dreamed_class_target_{class_name}.png")
             matplotlib.image.imsave(img_path, ndarr)
             self.logger.experiment.log_artifact(self.logger.run_id,  img_path)
 

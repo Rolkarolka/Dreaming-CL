@@ -3,21 +3,22 @@ import torch.nn as nn
 import torchvision
 import torchvision.transforms as transforms
 import torch.optim as optim
-from torch.utils.data import Subset, SubsetRandomSampler
-from torchvision.models import resnet34, ResNet34_Weights
+from torch.utils.data import SubsetRandomSampler
+from torchvision.models import resnet50, ResNet50_Weights
 
 classes_to_learn = [0, 1, 2]
-num_epochs = 10
+num_epochs = 80
 learning_rate = 0.001
 momentum = 0.9
 batch_size = 64
-teacher = resnet34(weights=ResNet34_Weights.DEFAULT)
-teacher_name = "resnet34"
 
+# from https://www.kaggle.com/code/kmldas/cifar10-resnet-90-accuracy-less-than-5-min
+stats = ((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
 transform = transforms.Compose([transforms.RandomHorizontalFlip(),
                                 transforms.RandomCrop(32, padding=4),
                                 transforms.ToTensor(),
-                                transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
+                                transforms.Normalize(*stats,inplace=True)])
+
 train_set = torchvision.datasets.CIFAR10(root='./data', train=True, download=True, transform=transform)
 
 train_indices = [i for i in range(len(train_set)) if train_set[i][1] in classes_to_learn]
@@ -25,6 +26,8 @@ trainloader = torch.utils.data.DataLoader(train_set, batch_size=batch_size, num_
                                           sampler=SubsetRandomSampler(train_indices))
 
 # Create a teacher-34 model
+teacher = resnet50(weights=ResNet50_Weights.DEFAULT)
+teacher_name = "resnet50"
 num_ftrs = teacher.fc.in_features
 teacher.fc = nn.Linear(num_ftrs, len(classes_to_learn))
 # Define loss function and optimizer
@@ -45,5 +48,6 @@ if __name__ == '__main__':
         print(f'Epoch {epoch + 1}, Loss: {running_loss / 100:.4f}')
 
     print('Finished Training')
+
     classes = '_'.join([f"{i}" for i in classes_to_learn])
     torch.save(teacher.state_dict(), f"teacher_{teacher_name}_classes_{classes}.weights")
