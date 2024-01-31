@@ -75,6 +75,7 @@ if __name__ == '__main__':
     num_epochs = 50
     batch_size = 64
     classes_to_learn = [0, 1, 2]
+    model_name = "resnet50"
 
     # Data
     print('==> Preparing data..')
@@ -122,4 +123,4 @@ if __name__ == '__main__':
 
     print('Finished Training')
     classes = '_'.join([f"{i}" for i in classes_to_learn])
-    torch.save(net.state_dict(), f"teacher_new_{net.__class__.__name__}_classes_{classes}.weights")
+    torch.save(net.state_dict(), f"teacher_new_{model_name}_classes_{classes}.weights")

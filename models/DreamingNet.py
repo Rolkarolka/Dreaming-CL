@@ -68,7 +68,7 @@ class DreamingNet(pl.LightningModule):
     def load_teacher_net(self, num_classes):
         teacher = ResNet50(num_classes)
         teacher = torch.nn.DataParallel(teacher)
-        teacher_weights_path = os.path.join(os.getcwd(), "utils", 'teacher', "teacher_new_<class 'torch.nn.parallel.data_parallel.DataParallel'>_classes_0_1_2.weights")
+        teacher_weights_path = os.path.join(os.getcwd(), "teacher_new_DataParallel_classes_0_1_2.weights")
         teacher_checkpoint = torch.load(teacher_weights_path)
         teacher.load_state_dict(teacher_checkpoint)
 
