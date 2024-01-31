@@ -24,7 +24,6 @@ import glob
 import collections
 import matplotlib
 
-from matplotlib import pyplot as plt
 from torch.utils.data import TensorDataset
 from torchvision.models import resnet18
 
@@ -65,13 +64,12 @@ class DeepInversion:
             logger,
             debug_output=True,
             epochs=400,
-            di_lr=0.1,
-            competitive_scale=0.0,
+            di_lr=5.0, #{1:0; 5:0; 10:0; 100:0} TODO adaptive learning rate
+            competitive_scale=10.0,
             di_var_scale=2.5e-5,
-            di_l2_scale=0.0,
+            di_l2_scale=3e-8,
             r_feature_weight=1e2,
             batch_size=64,
-            exp_descr="try1"
     ):
         self.di_lr = di_lr
         self.logger = logger
@@ -83,7 +81,6 @@ class DeepInversion:
         self.r_feature_weight = r_feature_weight
         self.class_num_samples = class_num_samples
         self.batch_size = batch_size
-        self.exp_descr = exp_descr
 
     def _get_images(self, net, device, targets, inputs,
                     net_student=None, prefix=None,
@@ -103,8 +100,8 @@ class DeepInversion:
             train_writer: tensorboardX object to store intermediate losses
             global_iteration: indexer to be used for tensorboard
             use_amp: boolean to indicate usage of APEX AMP for FP16 calculations - twice faster and less memory on TensorCores
-            optimizer: potimizer to be used for model inversion
-            inputs: data place holder for optimization, will be reinitialized to noise
+            optimizer: optimizer to be used for model inversion
+            inputs: data placeholder for optimization, will be reinitialized to noise
             bn_reg_scale: weight for r_feature_regularization
             random_labels: sample labels from random distribution or use columns of the same class
             l2_coeff: coefficient for L2 loss on input
@@ -237,7 +234,7 @@ class DeepInversion:
         net_teacher.eval()  # important, otherwise generated images will be non natural
         cudnn.benchmark = True
 
-        prefix = "runs/data_generation/" + self.exp_descr + "/"
+        prefix = "runs/data_generation/" + self.logger.run_id + "/"
 
         for create_folder in [prefix, prefix + "/best_images/"]:
             if not os.path.exists(create_folder):
@@ -256,8 +253,6 @@ class DeepInversion:
         i = 0
         while dreamed_targets.numel() < all_probes:
             inputs = torch.randn((self.batch_size, 3, 32, 32), requires_grad=True, device=device, dtype=data_type)
-            # targets = torch.LongTensor([random.choice(classes_to_dream) for _ in range(self.batch_size)]).to(device)
-
             targets = torch.LongTensor(all_targets[i * self.batch_size: i * self.batch_size + self.batch_size]).to(
                 device)
             optimizer_di = optim.Adam([inputs], lr=self.di_lr)

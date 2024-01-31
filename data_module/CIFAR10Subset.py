@@ -37,7 +37,7 @@ class CIFAR10Subset(CIFAR10):
             samples_proportion[class_name] = sum(self.targets == class_name)
         samples_proportion.update(teacher_class_proportion)
 
-        weights = {}
+        weights = {} # TODO
         all_samples = sum(samples_proportion.values())
         for class_name, num_samples in samples_proportion.items():
             weights = num_samples/all_samples
