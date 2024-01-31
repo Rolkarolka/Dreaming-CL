@@ -67,6 +67,7 @@ class DreamingNet(pl.LightningModule):
 
     def load_teacher_net(self, num_classes):
         teacher = ResNet50(num_classes)
+        teacher = torch.nn.DataParallel(teacher)
         teacher_weights_path = os.path.join(os.getcwd(), "utils", 'teacher', 'teacher_new_DataParallel_classes_0_1_2.weights')
         teacher_checkpoint = torch.load(teacher_weights_path)
         teacher.load_state_dict(teacher_checkpoint)
@@ -84,8 +85,9 @@ class DreamingNet(pl.LightningModule):
         return data
 
     def load_student_net(self, num_classes):
-        student = ResNet50(num_classes)
-        return student
+        net = ResNet50(num_classes)
+        net = torch.nn.DataParallel(net)
+        return net
 
     def visualize(self, cifar_data_module):
         train_batch = cifar_data_module.train_dataloader()
