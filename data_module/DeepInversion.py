@@ -222,7 +222,6 @@ class DeepInversion:
         return best_inputs
 
     def run_inversion(self, net_teacher, net_student, classes_to_dream):
-        student_num_features = net_student.fc.in_features
         device = torch.device("cuda:0") if torch.cuda.is_available() else torch.device("cpu")
 
         net_student = net_student.to(device)
