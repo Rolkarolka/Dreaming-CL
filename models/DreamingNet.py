@@ -87,6 +87,7 @@ class DreamingNet(pl.LightningModule):
     def load_student_net(self, num_classes):
         net = ResNet50(num_classes)
         net = torch.nn.DataParallel(net)
+        print(net)
         return net
 
     def visualize(self, cifar_data_module):
