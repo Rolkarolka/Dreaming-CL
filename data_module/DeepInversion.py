@@ -152,6 +152,7 @@ class DeepInversion:
                 # another way to force KL between negative probabilities
                 Q = F.softmax(outputs / T, dim=1)
                 P = F.softmax(outputs_student / T, dim=1)
+                print(Q.size(), P.size())
                 P = P[Q.size()]
                 M = 0.5 * (P + Q)
 
