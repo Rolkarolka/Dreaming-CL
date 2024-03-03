@@ -82,7 +82,7 @@ class DeepInversion:
         self.class_num_samples = class_num_samples
         self.batch_size = batch_size
 
-    def _get_images(self, net, device, targets, inputs,
+    def _get_images(self, net, device, targets, inputs, num_classes,
                     net_student=None, prefix=None,
                     optimizer=None):
         '''
@@ -152,7 +152,7 @@ class DeepInversion:
                 # another way to force KL between negative probabilities
                 Q = F.softmax(outputs / T, dim=1)
                 P = F.softmax(outputs_student / T, dim=1)
-                P = P[:,:Q.size()[1]]
+                P = P[:,:num_classes]
                 M = 0.5 * (P + Q)
 
                 P = torch.clamp(P, 0.01, 0.99)
@@ -258,7 +258,7 @@ class DeepInversion:
             inputs = self._get_images(net=net_teacher, targets=targets,
                                       net_student=net_student, prefix=prefix,
                                       optimizer=optimizer_di, inputs=inputs,
-                                      device=device)
+                                      device=device, num_class=len(classes_to_dream))
 
             dreamed_targets = torch.cat([dreamed_targets, targets.detach().cpu()], dim=0)
             dreamed_inputs = torch.cat([dreamed_inputs, inputs.detach().cpu()], dim=0)
@@ -268,7 +268,7 @@ class DeepInversion:
         if not os.path.isdir(trained_grid_path):
             os.makedirs(trained_grid_path)
 
-        num_class_probs = 2
+        num_class_probs = 5
         for class_name in classes_to_dream:
             class_indices = torch.nonzero(dreamed_targets == class_name).squeeze()
             random_indices = random.sample(class_indices.tolist(), min(num_class_probs, len(class_indices)))
@@ -279,4 +279,4 @@ class DeepInversion:
             self.logger.experiment.log_artifact(self.logger.run_id,  img_path)
 
         dataset = TensorDataset(dreamed_inputs, dreamed_targets)
-        return dataset
+        return dataset, net_student
