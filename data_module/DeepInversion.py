@@ -151,7 +151,8 @@ class DeepInversion:
                 # jensen shanon divergence:
                 # another way to force KL between negative probabilities
                 Q = F.softmax(outputs / T, dim=1)
-                P = F.softmax(outputs_student / T, dim=1)[:,:num_classes]
+                P = F.softmax(outputs_student / T, dim=1)
+                P = P[:,:Q.size()[1]]
                 M = 0.5 * (P + Q)
 
                 P = torch.clamp(P, 0.01, 0.99)
