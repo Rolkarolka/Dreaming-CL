@@ -153,7 +153,7 @@ class DeepInversion:
                 Q = F.softmax(outputs / T, dim=1)
                 P = F.softmax(outputs_student / T, dim=1)
                 print(Q.size(), P.size())
-                P = P[Q.size()]
+                P = P[:,:Q.size()[1]]
                 M = 0.5 * (P + Q)
 
                 P = torch.clamp(P, 0.01, 0.99)
