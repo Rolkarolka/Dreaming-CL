@@ -47,9 +47,9 @@ def main(config: DictConfig) -> None:
     mlf_logger = MLFlowLogger(experiment_name=experiment.name, tracking_uri=experiment.tracking_uri,
                               run_name=experiment.run_name)
     dreaming_net = DreamingNet(experiment.classes_to_dream, experiment.classes_to_learn)
-    cifar_data_module = CIFARDataModule(dreaming_net.teacher, dreaming_net.teacher_class_proportion,
-                                        experiment.classes_to_learn, experiment.classes_to_dream, mlf_logger, data_path,
+    cifar_data_module = CIFARDataModule(experiment.classes_to_learn, experiment.classes_to_dream, mlf_logger, data_path,
                                         experiment.batch_size)
+    dreaming_net.student = cifar_data_module.create_dataset(dreaming_net)
     trainer = pl.Trainer(logger=mlf_logger if experiment.experiment_run else None, max_epochs=experiment.max_epochs)
     trainer.fit(model=dreaming_net, datamodule=cifar_data_module)
 

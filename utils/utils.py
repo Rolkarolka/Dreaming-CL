@@ -8,19 +8,19 @@ import seaborn as sns
 import os
 umap = umap.UMAP(metric="cosine", n_neighbors=100)
 
-def embed_imgs(model, data_loader):
+def embed_imgs(model, batch):
     img_list, embed_list = [], []
+    inputs, targets = batch
     device = torch.device("cuda:0") if torch.cuda.is_available() else torch.device("cpu")
     model.eval()
     labels = []
-    for inputs, targets in data_loader:
-        inputs = inputs.to(device)
-        model.to(device)
-        with torch.no_grad():
-            preds = model(inputs)
-        img_list.append(inputs.cpu())
-        embed_list.append(preds.cpu())
-        labels.append(targets)
+    inputs = inputs.to(device)
+    model.to(device)
+    with torch.no_grad():
+        preds = model(inputs)
+    img_list.append(inputs.cpu())
+    embed_list.append(preds.cpu())
+    labels.append(targets)
     return (torch.cat(img_list, dim=0), torch.cat(embed_list, dim=0), torch.cat(labels, dim=0))
 
 

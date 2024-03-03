@@ -64,11 +64,11 @@ class DeepInversion:
             logger,
             debug_output=True,
             epochs=2000,
-            di_lr=0.05, #{1:0; 5:0; 10:0; 100:0} TODO adaptive learning rate
+            di_lr=0.05,
             competitive_scale=10.0,
             di_var_scale=2.5e-5,
             di_l2_scale=3e-8,
-            di_r_feature=5.0,
+            di_r_feature=5.0,  #{1:0; 5:0; 10:0; 100:0} TODO adaptive learning rate
             batch_size=64,
     ):
         self.di_lr = di_lr
@@ -221,11 +221,8 @@ class DeepInversion:
 
         return best_inputs
 
-    def run_inversion(self, net_teacher, classes_to_dream):
-        net_student = resnet18()
+    def run_inversion(self, net_teacher, net_student, classes_to_dream):
         student_num_features = net_student.fc.in_features
-        net_student.fc = nn.Linear(student_num_features, len(classes_to_dream))
-
         device = torch.device("cuda:0") if torch.cuda.is_available() else torch.device("cpu")
 
         net_student = net_student.to(device)
@@ -271,7 +268,7 @@ class DeepInversion:
         if not os.path.isdir(trained_grid_path):
             os.makedirs(trained_grid_path)
 
-        num_class_probs = 5
+        num_class_probs = 2
         for class_name in classes_to_dream:
             class_indices = torch.nonzero(dreamed_targets == class_name).squeeze()
             random_indices = random.sample(class_indices.tolist(), min(num_class_probs, len(class_indices)))
