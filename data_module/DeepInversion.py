@@ -258,7 +258,7 @@ class DeepInversion:
             inputs = self._get_images(net=net_teacher, targets=targets,
                                       net_student=net_student, prefix=prefix,
                                       optimizer=optimizer_di, inputs=inputs,
-                                      device=device, num_class=len(classes_to_dream))
+                                      device=device, num_classes=len(classes_to_dream))
 
             dreamed_targets = torch.cat([dreamed_targets, targets.detach().cpu()], dim=0)
             dreamed_inputs = torch.cat([dreamed_inputs, inputs.detach().cpu()], dim=0)
