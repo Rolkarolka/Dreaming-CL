@@ -67,8 +67,8 @@ class DeepInversion:
             di_lr=0.1,
             competitive_scale=0.0,
             di_var_scale=0.001,
-            di_l2_scale=0.0,
-            di_r_feature=10.0,  #{1:0; 5:0; 10:0; 100:0} TODO adaptive learning rate
+            di_l2_scale=3e-8,
+            di_r_feature=100.0,  #{1:0; 5:0; 10:0; 100:0} TODO adaptive learning rate
             batch_size=64,
     ):
         self.di_lr = di_lr
@@ -124,7 +124,6 @@ class DeepInversion:
         loss_r_feature_layers = []
         for module in net.modules():
             if isinstance(module, nn.BatchNorm2d):
-                print("hook added")
                 loss_r_feature_layers.append(DeepInversionFeatureHook(module))
 
         # setting up the range for jitter
@@ -153,7 +152,7 @@ class DeepInversion:
                 # another way to force KL between negative probabilities
                 Q = F.softmax(outputs / T, dim=1)
                 P = F.softmax(outputs_student / T, dim=1)
-                P = P[:,:Q.size()[1]]
+                P = P[:,:num_classes]
                 M = 0.5 * (P + Q)
 
                 P = torch.clamp(P, 0.01, 0.99)
