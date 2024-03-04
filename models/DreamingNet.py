@@ -90,7 +90,7 @@ class DreamingNet(pl.LightningModule):
         return net
 
     def visualize(self, cifar_data_module):
-        train_batch = cifar_data_module.train_dataloader()
+        train_batch = next(iter(cifar_data_module.train_dataloader()))
         teacher_imgs, teacher_embeds, teacher_labels = embed_imgs(self.teacher, train_batch)
         student_imgs, student_embeds, student_labels = embed_imgs(self.student, train_batch)
         visualize_output_space(self.logger, teacher_imgs, teacher_embeds, teacher_labels, step="train_teacher")
