@@ -124,6 +124,7 @@ class DeepInversion:
         loss_r_feature_layers = []
         for module in net.modules():
             if isinstance(module, nn.BatchNorm2d):
+                print("hook added")
                 loss_r_feature_layers.append(DeepInversionFeatureHook(module))
 
         # setting up the range for jitter
