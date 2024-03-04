@@ -43,7 +43,6 @@ def visualize_output_space(mlf_logger, images, embeddings, labels, step="train",
         palette=sns.color_palette("hls", 10),
         data=data,
         legend="full",
-        alpha=0.1
     )
 
     for location, example in zip(examples_locations, examples):

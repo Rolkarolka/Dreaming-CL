@@ -65,10 +65,10 @@ class DeepInversion:
             debug_output=True,
             epochs=1000,
             di_lr=0.1,
-            competitive_scale=0.01,
-            di_var_scale=0.00005,
+            competitive_scale=0.0,
+            di_var_scale=0.001,
             di_l2_scale=0.0,
-            di_r_feature=1.0,  #{1:0; 5:0; 10:0; 100:0} TODO adaptive learning rate
+            di_r_feature=10.0,  #{1:0; 5:0; 10:0; 100:0} TODO adaptive learning rate
             batch_size=64,
     ):
         self.di_lr = di_lr
