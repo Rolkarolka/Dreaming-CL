@@ -13,6 +13,7 @@ from __future__ import unicode_literals
 
 import random
 
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.backends.cudnn as cudnn
@@ -28,6 +29,55 @@ from torch.utils.data import TensorDataset
 from torchvision.models import resnet18
 
 
+def lr_policy(lr_fn):
+    def _alr(optimizer, iteration, epoch):
+        lr = lr_fn(iteration, epoch)
+        for param_group in optimizer.param_groups:
+            param_group['lr'] = lr
+
+    return _alr
+
+def clip(image_tensor, use_fp16=False):
+    '''
+    adjust the input based on mean and variance
+    '''
+    if use_fp16:
+        mean = np.array([0.485, 0.456, 0.406], dtype=np.float16)
+        std = np.array([0.229, 0.224, 0.225], dtype=np.float16)
+    else:
+        mean = np.array([0.485, 0.456, 0.406])
+        std = np.array([0.229, 0.224, 0.225])
+    for c in range(3):
+        m, s = mean[c], std[c]
+        image_tensor[:, c] = torch.clamp(image_tensor[:, c], -m / s, (1 - m) / s)
+    return image_tensor
+
+
+def lr_cosine_policy(base_lr, warmup_length, epochs):
+    def _lr_fn(iteration, epoch):
+        if epoch < warmup_length:
+            lr = base_lr * (epoch + 1) / warmup_length
+        else:
+            e = epoch - warmup_length
+            es = epochs - warmup_length
+            lr = 0.5 * (1 + np.cos(np.pi * e / es)) * base_lr
+        return lr
+
+    return lr_policy(_lr_fn)
+
+
+def get_image_prior_losses(inputs_jit):
+    # COMPUTE total variation regularization loss
+    diff1 = inputs_jit[:, :, :, :-1] - inputs_jit[:, :, :, 1:]
+    diff2 = inputs_jit[:, :, :-1, :] - inputs_jit[:, :, 1:, :]
+    diff3 = inputs_jit[:, :, 1:, :-1] - inputs_jit[:, :, :-1, 1:]
+    diff4 = inputs_jit[:, :, :-1, :-1] - inputs_jit[:, :, 1:, 1:]
+
+    loss_var_l2 = torch.norm(diff1) + torch.norm(diff2) + torch.norm(diff3) + torch.norm(diff4)
+    loss_var_l1 = (diff1.abs() / 255.0).mean() + (diff2.abs() / 255.0).mean() + (
+            diff3.abs() / 255.0).mean() + (diff4.abs() / 255.0).mean()
+    loss_var_l1 = loss_var_l1 * 255.0
+    return loss_var_l1, loss_var_l2
 
 class DeepInversionFeatureHook:
     '''
@@ -66,21 +116,30 @@ class DeepInversion:
             epochs=1000,
             di_lr=0.1,
             competitive_scale=0.0,
-            di_var_scale=0.001,
             di_l2_scale=3e-8,
             di_r_feature=100.0,  #{1:0; 5:0; 10:0; 100:0} TODO adaptive learning rate
+            di_main_loss_multiplier = 1.0,
             batch_size=64,
+            tv_l1 = 0.0,
+            tv_l2 = 0.0001
     ):
         self.di_lr = di_lr
         self.logger = logger
         self.epochs = epochs
         self.debug_output = debug_output
         self.competitive_scale = competitive_scale
-        self.di_var_scale = di_var_scale
         self.di_l2_scale = di_l2_scale
         self.di_r_feature = di_r_feature
+        self.di_main_loss_multiplier = di_main_loss_multiplier
         self.class_num_samples = class_num_samples
         self.batch_size = batch_size
+        self.tv_l1 = tv_l1
+        self.tv_l2 = tv_l2
+
+        self.jitter = 30
+        self.do_flip = True
+        self.first_bn_multiplier = 10.
+
 
     def _get_images(self, net, device, targets, inputs, num_classes,
                     net_student=None, prefix=None,
@@ -110,15 +169,13 @@ class DeepInversion:
         '''
 
         kl_loss = nn.KLDivLoss(reduction='batchmean').to(device)
-
-        # preventing backpropagation through student for Adaptive DeepInversion
-        net_student.eval()
-
         best_cost = 1e6
-        # set up criteria for optimization
         criterion = nn.CrossEntropyLoss()
 
+        net_student.eval()
+
         optimizer.state = collections.defaultdict(dict)  # Reset state of optimizer
+        pooling_function = nn.modules.pooling.AvgPool2d(kernel_size=2)
 
         ## Create hooks for feature statistics catching
         loss_r_feature_layers = []
@@ -129,72 +186,111 @@ class DeepInversion:
         # setting up the range for jitter
         lim_0, lim_1 = 2, 2
 
-        for epoch in range(self.epochs):
-            # apply random jitter offsets
-            off1 = random.randint(-lim_0, lim_0)
-            off2 = random.randint(-lim_1, lim_1)
-            inputs_jit = torch.roll(inputs, shifts=(off1, off2), dims=(2, 3))
+        skipfirst = False
+        iteration = 0
+        for lr_it, lower_res in enumerate([2, 1]):
+            if lr_it==0:
+                iterations_per_layer = 2000
+            else:
+                iterations_per_layer = 1000 if not skipfirst else 2000
 
-            # foward with jit images
-            optimizer.zero_grad()
-            net.zero_grad()
-            outputs = net(inputs_jit)
-            loss = criterion(outputs, targets)
-            loss_target = loss.item()
+            if lr_it==0 and skipfirst:
+                continue
 
-            # competition loss, Adaptive DeepInvesrion
-            if self.competitive_scale != 0.0:
-                net_student.zero_grad()
-                outputs_student = net_student(inputs_jit)
-                T = 3.0
+            lim_0, lim_1 = self.jitter // lower_res, self.jitter // lower_res
 
-                # jensen shanon divergence:
-                # another way to force KL between negative probabilities
-                Q = F.softmax(outputs / T, dim=1)
-                P = F.softmax(outputs_student / T, dim=1)
-                P = P[:,:num_classes]
-                M = 0.5 * (P + Q)
+            optimizer = optim.Adam([inputs], lr=self.di_lr, betas=[0.5, 0.9], eps=1e-8)
+            do_clip = True
+            lr_scheduler = lr_cosine_policy(self.di_lr, 100, iterations_per_layer)
 
-                P = torch.clamp(P, 0.01, 0.99)
-                Q = torch.clamp(Q, 0.01, 0.99)
-                M = torch.clamp(M, 0.01, 0.99)
-                eps = 0.0
-                # loss_verifier_cig = 0.5 * kl_loss(F.log_softmax(outputs_verifier / T, dim=1), M) +  0.5 * kl_loss(F.log_softmax(outputs/T, dim=1), M)
-                loss_verifier_cig = 0.5 * kl_loss(torch.log(P + eps), M) + 0.5 * kl_loss(torch.log(Q + eps), M)
-                # JS criteria - 0 means full correlation, 1 - means completely different
-                loss_verifier_cig = 1.0 - torch.clamp(loss_verifier_cig, 0.0, 1.0)
 
-                loss = loss + self.competitive_scale * loss_verifier_cig
+            for iteration_loc in range(iterations_per_layer):
+                iteration += 1
+                # learning rate scheduling
+                lr_scheduler(optimizer, iteration_loc, iteration_loc)
+                # apply random jitter offsets
+                off1 = random.randint(-lim_0, lim_0)
+                off2 = random.randint(-lim_1, lim_1)
+                inputs_jit = torch.roll(inputs, shifts=(off1, off2), dims=(2, 3))
 
-            # apply total variation regularization
-            diff1 = inputs_jit[:, :, :, :-1] - inputs_jit[:, :, :, 1:]
-            diff2 = inputs_jit[:, :, :-1, :] - inputs_jit[:, :, 1:, :]
-            diff3 = inputs_jit[:, :, 1:, :-1] - inputs_jit[:, :, :-1, 1:]
-            diff4 = inputs_jit[:, :, :-1, :-1] - inputs_jit[:, :, 1:, 1:]
-            loss_var = torch.norm(diff1) + torch.norm(diff2) + torch.norm(diff3) + torch.norm(diff4)
-            loss = loss + self.di_var_scale * loss_var
+                # Flipping
+                flip = random.random() > 0.5
+                if flip and self.do_flip:
+                    inputs_jit = torch.flip(inputs_jit, dims=(3,))
 
-            # R_feature loss
-            loss_distr = sum([mod.r_feature for mod in loss_r_feature_layers])
-            loss = loss + self.di_r_feature * loss_distr  # best for noise before BN
 
-            # l2 loss
-            loss = loss + self.di_l2_scale * torch.norm(inputs_jit, 2)
+                # foward with jit images
+                optimizer.zero_grad()
+                net.zero_grad()
 
-            if self.debug_output and epoch % 200 == 0:
-                print(
-                    f"It {epoch}\t Losses: total: {loss.item():3.3f},\ttarget: {loss_target:3.3f} \tR_feature_loss unscaled:\t {loss_distr.item():3.3f}")
-                vutils.save_image(inputs.data.clone(),
-                                  './{}/output_{}.png'.format(prefix, epoch // 200),
-                                  normalize=True, scale_each=True, nrow=10)
+                outputs = net(inputs_jit)
 
-            if best_cost > loss.item():
-                best_cost = loss.item()
-                best_inputs = inputs.data
+                # R_cross classification loss
+                loss = criterion(outputs, targets)
 
-            # backward pass
-            loss.backward()
-            optimizer.step()
+                # R_prior losses
+                loss_var_l1, loss_var_l2 = get_image_prior_losses(inputs_jit)
+
+                # R_feature loss
+                rescale = [self.first_bn_multiplier] + [1. for _ in range(len(loss_r_feature_layers) - 1)]
+                loss_r_feature = sum(
+                    [mod.r_feature * rescale[idx] for (idx, mod) in enumerate(loss_r_feature_layers)])
+
+                # competition loss, Adaptive DeepInvesrion
+                loss_verifier_cig = torch.zeros(1)
+                if self.competitive_scale != 0.0:
+                    net_student.zero_grad()
+                    outputs_student = net_student(inputs_jit)
+                    T = 3.0
+
+                    # jensen shanon divergence:
+                    # another way to force KL between negative probabilities
+                    Q = F.softmax(outputs / T, dim=1)
+                    P = F.softmax(outputs_student / T, dim=1)
+                    P = P[:,:num_classes]
+                    M = 0.5 * (P + Q)
+
+                    P = torch.clamp(P, 0.01, 0.99)
+                    Q = torch.clamp(Q, 0.01, 0.99)
+                    M = torch.clamp(M, 0.01, 0.99)
+                    eps = 0.0
+                    loss_verifier_cig = 0.5 * kl_loss(torch.log(P + eps), M) + 0.5 * kl_loss(torch.log(Q + eps), M)
+                    # JS criteria - 0 means full correlation, 1 - means completely different
+                    loss_verifier_cig = 1.0 - torch.clamp(loss_verifier_cig, 0.0, 1.0)
+
+                    # loss = loss + self.competitive_scale * loss_verifier_cig
+
+                # l2 loss
+                loss_l2 = torch.norm(inputs_jit.view(self.batch_size, -1), dim=1).mean()
+
+                loss_aux = self.tv_l2 * loss_var_l2 + \
+                           self.tv_l1 * loss_var_l1 + \
+                           self.di_r_feature * loss_r_feature + \
+                           self.di_l2_scale * loss_l2
+
+                if self.competitive_scale != 0.0:
+                    loss_aux += self.competitive_scale * loss_verifier_cig
+
+                loss = self.di_main_loss_multiplier * loss + loss_aux
+                loss.backward()
+                optimizer.step()
+
+                if self.debug_output and iteration % 200 == 0:
+                    print("------------iteration {}----------".format(iteration))
+                    print("total loss", loss.item())
+                    print("loss_r_feature", loss_r_feature.item())
+                    print("main criterion", criterion(outputs, targets).item())
+
+                    # vutils.save_image(inputs.data.clone(),
+                    #                   './{}/output_{}.png'.format(prefix, epoch // 200),
+                    #                   normalize=True, scale_each=True, nrow=10)
+
+                if do_clip:
+                    inputs.data = clip(inputs.data)
+
+                if best_cost > loss.item():
+                    best_cost = loss.item()
+                    best_inputs = inputs.data
 
         outputs = net(best_inputs)
         _, predicted_teach = outputs.max(1)

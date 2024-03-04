@@ -24,7 +24,7 @@ def embed_imgs(model, batch):
     return (torch.cat(img_list, dim=0), torch.cat(embed_list, dim=0), torch.cat(labels, dim=0))
 
 
-def visualize_output_space(mlf_logger, images, embeddings, labels, step="train", example_size = 10):
+def visualize_output_space(mlf_logger, images, embeddings, labels, step="train", num_classes = 5, example_size = 10):
     train_embedded = umap.fit_transform(embeddings)
     data = pd.DataFrame(train_embedded)
     data["label"] = labels
@@ -48,8 +48,9 @@ def visualize_output_space(mlf_logger, images, embeddings, labels, step="train",
     for location, example in zip(examples_locations, examples):
         x, y = location[0], location[1]
         label = int(location["label"])
+
         ab = AnnotationBbox(OffsetImage(example, zoom=1), (x, y), frameon=True,
-                            bboxprops=dict(facecolor=sns.color_palette("hls", 10)[label], boxstyle="round"))
+                            bboxprops=dict(facecolor=sns.color_palette("bright", num_classes)[label], boxstyle="round"))
         ax.add_artist(ab)
     img_path = os.path.join(os.getcwd(), 'trained', f'output_space_{step}.png')
     plt.savefig(img_path)
