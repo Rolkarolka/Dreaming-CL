@@ -41,7 +41,7 @@ if __name__ == '__main__':
         for inputs, labels in trainloader:
             optimizer.zero_grad()
             outputs = teacher(inputs)
-            loss = criterion(outputs, labels)
+            loss = criterion(outputs, labels) # TODO dodać uczenie metryczne do nauczyciela
             loss.backward()
             optimizer.step()
             running_loss += loss.item()

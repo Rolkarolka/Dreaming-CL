@@ -9,7 +9,7 @@ import torchmetrics
 from torchvision import models
 
 from models.MetricLearningLoss import MetricLearningLoss
-from utils.utils import embed_imgs, visualize_output_space
+from utils.utils import embed_imgs, visualize_output_space, prepare_batch
 from utils.teacher.resnet_model import ResNet50
 
 
@@ -90,9 +90,9 @@ class DreamingNet(pl.LightningModule):
         return net
 
     def visualize(self, cifar_data_module):
-        train_batch = next(iter(cifar_data_module.train_dataloader()))
-        teacher_imgs, teacher_embeds, teacher_labels = embed_imgs(self.teacher, train_batch)
-        student_imgs, student_embeds, student_labels = embed_imgs(self.student, train_batch)
+        batch = prepare_batch(cifar_data_module)
+        teacher_imgs, teacher_embeds, teacher_labels = embed_imgs(self.teacher, batch)
+        student_imgs, student_embeds, student_labels = embed_imgs(self.student, batch)
         visualize_output_space(self.logger, teacher_imgs, teacher_embeds, teacher_labels, step="train_teacher")
         visualize_output_space(self.logger, student_imgs, student_embeds, student_labels, step="train_student")
 

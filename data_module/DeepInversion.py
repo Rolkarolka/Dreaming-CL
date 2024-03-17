@@ -117,7 +117,7 @@ class DeepInversion:
             di_lr=0.1,
             competitive_scale=0.0,
             di_l2_scale=3e-8,
-            di_r_feature=100.0,  #{1:0; 5:0; 10:0; 100:0} TODO adaptive learning rate
+            di_r_feature=10.0,  #{1:0; 5:0; 10:0; 100:0} TODO adaptive learning rate
             di_main_loss_multiplier = 1.0,
             batch_size=64,
             tv_l1 = 0.0,

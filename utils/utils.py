@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import torch
 import umap
+from torch.utils.data import DataLoader
 from matplotlib import pyplot as plt
 from matplotlib.offsetbox import AnnotationBbox, OffsetImage
 import seaborn as sns
@@ -23,6 +24,34 @@ def embed_imgs(model, batch):
     labels.append(targets)
     return (torch.cat(img_list, dim=0), torch.cat(embed_list, dim=0), torch.cat(labels, dim=0))
 
+
+def prepare_batch(cifar_data_module):
+    dataloader = DataLoader(cifar_data_module.test_data, shuffle=True, num_workers=cifar_data_module.num_workers)
+    num_probes_of_class = 5
+    classes_id = cifar_data_module.classes_to_learn + cifar_data_module.classes_to_dream
+    dataiter = iter(dataloader)
+    batch_img, batch_targets = next(dataiter)
+    batch_img_shape = batch_img.shape
+    batch_target_shape = batch_targets.shape
+    print(batch_img_shape, batch_target_shape)
+    print((*batch_img_shape[:-1],0))
+    prep_imgs = [torch.empty((*batch_img_shape[:-1],0)) for _ in range(len(classes_id))]
+    prep_targets = [torch.empty((*batch_target_shape[:-1],0)) for _ in range(len(classes_id))]
+    counted = 0
+    while num_probes_of_class * len(classes_id) > counted:
+        batch_img, batch_targets = next(iter(dataloader))
+
+        for idx, class_id in enumerate(classes_id):
+            looking_num_probes = num_probes_of_class - len(prep_targets[idx])
+            if looking_num_probes > 0:
+                mask = batch_targets == class_id
+                indices = torch.nonzero(mask)[:looking_num_probes]
+                prep_imgs[idx].cat(batch_img[indices], -1)
+                prep_targets[idx].cat(batch_targets[indices], -1)
+                counted += len(indices)
+
+
+    return prep_imgs, prep_targets
 
 def visualize_output_space(mlf_logger, images, embeddings, labels, step="train", num_classes = 5, example_size = 10):
     train_embedded = umap.fit_transform(embeddings)
