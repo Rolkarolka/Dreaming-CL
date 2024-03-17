@@ -32,7 +32,7 @@ class DreamingNet(pl.LightningModule):
         self.test_acc = torchmetrics.Accuracy(task="multiclass", num_classes=num_classes)
 
     def training_step(self, batch, batch_idx):
-        x, y = batch
+        x, y, importance = batch
         preds = self.student(x)
         loss = self.loss_fun(preds, y)
         loss += self.metric_loss(preds, y)
@@ -42,7 +42,7 @@ class DreamingNet(pl.LightningModule):
         return loss
 
     def validation_step(self, batch, batch_idx):
-        x, y = batch
+        x, y, importance = batch
         preds = self.student(x)
         loss = self.loss_fun(preds, y)
         acc = self.val_acc(preds, y)
@@ -51,7 +51,7 @@ class DreamingNet(pl.LightningModule):
         return loss
 
     def test_step(self, batch, batch_idx):
-        x, y = batch
+        x, y, importance = batch
         preds = self.student(x)
         acc = self.test_acc(preds, y)
         logs = {"test_acc": acc}

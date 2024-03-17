@@ -2,6 +2,7 @@ import numpy as np
 from typing import Optional, Callable, List
 
 from torchvision.datasets import CIFAR10
+from PIL import Image
 
 
 class CIFAR10Subset(CIFAR10):
@@ -16,7 +17,7 @@ class CIFAR10Subset(CIFAR10):
                  download: bool = False):
         super().__init__(root=root, train=train, transform=transform, download=download)
 
-        # class_importance = self.get_class_importance(self, classes_to_learn, teacher_class_proportion)
+        self.class_importance = self.get_class_importance(classes_to_learn, teacher_class_proportion)
 
         self.classes = [self.classes[i] for i in all_classes]
         self.class_to_idx = {cls: i for i, cls in enumerate(self.classes)}
@@ -31,13 +32,31 @@ class CIFAR10Subset(CIFAR10):
             self.targets = [self.targets[i] for i in data_idx]
             self.data = self.data[data_idx]
 
+    def __getitem__(self, index: int):
+        img, target = self.data[index], self.targets[index]
+
+        # doing this so that it is consistent with all other datasets
+        # to return a PIL Image
+        img = Image.fromarray(img)
+
+        if self.transform is not None:
+            img = self.transform(img)
+
+        if self.target_transform is not None:
+            target = self.target_transform(target)
+
+        importance = self.class_importance[target.item()]
+
+        return img, target, importance
+
     def get_class_importance(self, classes_to_learn, teacher_class_proportion):
         samples_proportion = {}
         for class_name in classes_to_learn:
             samples_proportion[class_name] = sum(self.targets == class_name)
         samples_proportion.update(teacher_class_proportion)
 
-        weights = {} # TODO
+        weights = {}
         all_samples = sum(samples_proportion.values())
         for class_name, num_samples in samples_proportion.items():
-            weights = num_samples/all_samples
+            weights = (all_samples - num_samples)/all_samples
+        return weights
