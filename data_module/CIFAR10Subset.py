@@ -52,7 +52,7 @@ class CIFAR10Subset(CIFAR10):
     def get_class_importance(self, classes_to_learn, teacher_class_proportion):
         samples_proportion = {}
         for class_name in classes_to_learn:
-            samples_proportion[class_name] = sum(self.targets == class_name)
+            samples_proportion[class_name] = sum(int(self.targets == class_name))
         if teacher_class_proportion is not None:
             samples_proportion.update(teacher_class_proportion)
         weights = {}
