@@ -1,4 +1,5 @@
 import numpy as np
+import torch
 from typing import Optional, Callable, List
 
 from torchvision.datasets import CIFAR10
@@ -52,9 +53,8 @@ class CIFAR10Subset(CIFAR10):
     def get_class_importance(self, classes_to_learn, teacher_class_proportion):
         samples_proportion = {}
         for class_name in classes_to_learn:
-            x = self.targets == class_name
+            x = sum(torch.where(self.targets == class_name).item())
             print(x)
-            print(sum(x))
             samples_proportion[class_name] = sum(self.targets == class_name)
         if teacher_class_proportion is not None:
             samples_proportion.update(teacher_class_proportion)
