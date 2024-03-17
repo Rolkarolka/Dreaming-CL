@@ -21,7 +21,10 @@ class DreamingNet(pl.LightningModule):
             learning_rate=0.1
     ):
         super().__init__()
-        self.teacher, self.teacher_class_proportion = self.load_teacher_net(len(classes_to_dream))
+        if classes_to_dream is not None and len(classes_to_dream) != 0:
+            self.teacher, self.teacher_class_proportion = self.load_teacher_net(len(classes_to_dream))
+        else:
+            self.teacher, self.teacher_class_proportion = None, None
         self.student = self.load_student_net(len(classes_to_dream) + len(classes_to_learn))
         num_classes = len(classes_to_dream) + len(classes_to_learn)
         self.loss_fun = nn.CrossEntropyLoss()
@@ -35,6 +38,7 @@ class DreamingNet(pl.LightningModule):
         x, y, importance = batch
         preds = self.student(x)
         loss = self.loss_fun(preds, y)
+        print("loss", loss)
         loss += self.metric_loss(preds, y)
         acc = self.train_acc(preds, y)
         logs = {"train_loss": loss, "train_acc": acc}
@@ -91,9 +95,11 @@ class DreamingNet(pl.LightningModule):
 
     def visualize(self, cifar_data_module):
         batch = prepare_batch(cifar_data_module)
-        teacher_imgs, teacher_embeds, teacher_labels = embed_imgs(self.teacher, batch)
+        if self.teacher is not None:
+            teacher_imgs, teacher_embeds, teacher_labels = embed_imgs(self.teacher, batch)
+            visualize_output_space(self.logger, teacher_imgs, teacher_embeds, teacher_labels, step="train_teacher")
+
         student_imgs, student_embeds, student_labels = embed_imgs(self.student, batch)
-        visualize_output_space(self.logger, teacher_imgs, teacher_embeds, teacher_labels, step="train_teacher")
         visualize_output_space(self.logger, student_imgs, student_embeds, student_labels, step="train_student")
 
     def save(self):

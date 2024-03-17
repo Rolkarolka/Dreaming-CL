@@ -53,8 +53,8 @@ class CIFAR10Subset(CIFAR10):
         samples_proportion = {}
         for class_name in classes_to_learn:
             samples_proportion[class_name] = sum(self.targets == class_name)
-        samples_proportion.update(teacher_class_proportion)
-
+        if teacher_class_proportion is not None:
+            samples_proportion.update(teacher_class_proportion)
         weights = {}
         all_samples = sum(samples_proportion.values())
         for class_name, num_samples in samples_proportion.items():

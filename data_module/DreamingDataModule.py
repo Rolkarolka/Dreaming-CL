@@ -33,15 +33,16 @@ class CIFARDataModule(pl.LightningDataModule):
         self.weight_class_importance = self.get_class_importance()
 
     def create_dataset(self, model_class):
-        self.teacher_class_proportion = model_class.teacher_class_proportion
-        # datasets
-        samples_to_dream = self.get_amount_of_samples_to_dream()
-        self.deep_inversion = DeepInversion(samples_to_dream, logger=self.logger)
         if len(self.classes_to_dream) > 0:
+            self.teacher_class_proportion = model_class.teacher_class_proportion
+            # datasets
+            samples_to_dream = self.get_amount_of_samples_to_dream()
+            self.deep_inversion = DeepInversion(samples_to_dream, logger=self.logger)
             inversed_data, improved_student = self.deep_inversion.run_inversion(model_class.teacher, model_class.student, self.classes_to_dream)
         else:
             inversed_data = None
             improved_student = model_class.student
+            samples_to_dream = None
         self.train_val_data = CIFAR10Subset(root=self.data_dir, classes_to_learn=self.classes_to_learn,
                                             all_classes=self.all_classes, dreamed_data=inversed_data, train=True,
                                             download=True, teacher_class_proportion=samples_to_dream, transform=self.transform)
@@ -52,7 +53,7 @@ class CIFARDataModule(pl.LightningDataModule):
         return improved_student
 
     def get_amount_of_samples_to_dream(self):
-        max_number_of_dreamed_imgs = 300
+        max_number_of_dreamed_imgs = 300 # TODO
         samples_to_dream = {}
         for dreamed_class in self.teacher_class_proportion:
             num_samples = self.teacher_class_proportion[dreamed_class]/sum(self.teacher_class_proportion.values()) * max_number_of_dreamed_imgs
