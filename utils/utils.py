@@ -32,20 +32,19 @@ def prepare_batch(cifar_data_module):
     dataiter = iter(dataloader)
     batch_img, batch_targets = next(dataiter)
     batch_img_shape = batch_img.shape
-    batch_target_shape = batch_targets.shape
     prep_imgs = [torch.empty((0, *batch_img_shape[1:])) for _ in range(len(classes_id))]
     prep_targets = [torch.empty((0)) for _ in range(len(classes_id))]
     counted = 0
     while num_probes_of_class * len(classes_id) > counted:
-        batch_img, batch_targets = next(iter(dataloader))
+        batch_img, batch_targets = next(dataiter)
 
         for idx, class_id in enumerate(classes_id):
             looking_num_probes = num_probes_of_class - len(prep_targets[idx])
             if looking_num_probes > 0:
                 mask = batch_targets == class_id
                 indices = torch.nonzero(mask)[:looking_num_probes]
-                prep_imgs[idx].cat(batch_img[indices], 0)
-                prep_targets[idx].cat(batch_targets[indices], 0)
+                prep_imgs[idx] = torch.cat((prep_imgs[idx], batch_img[indices]), dim=0)
+                prep_targets[idx] = torch.cat((prep_targets[idx], batch_targets[indices]), dim=0)
                 counted += len(indices)
 
     prep_imgs = torch.cat(prep_imgs, axis=0)

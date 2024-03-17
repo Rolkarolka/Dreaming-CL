@@ -37,7 +37,11 @@ class CIFARDataModule(pl.LightningDataModule):
         # datasets
         samples_to_dream = self.get_amount_of_samples_to_dream()
         self.deep_inversion = DeepInversion(samples_to_dream, logger=self.logger)
-        inversed_data, improved_student = self.deep_inversion.run_inversion(model_class.teacher, model_class.student, self.classes_to_dream)
+        if len(self.classes_to_dream) > 0:
+            inversed_data, improved_student = self.deep_inversion.run_inversion(model_class.teacher, model_class.student, self.classes_to_dream)
+        else:
+            inversed_data = None
+            improved_student = model_class.student
         self.train_val_data = CIFAR10Subset(root=self.data_dir, classes_to_learn=self.classes_to_learn,
                                             all_classes=self.all_classes, dreamed_data=inversed_data, train=True,
                                             download=True, teacher_class_proportion=self.teacher_class_proportion, transform=self.transform)
