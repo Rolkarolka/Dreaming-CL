@@ -26,17 +26,15 @@ def embed_imgs(model, batch):
 
 
 def prepare_batch(cifar_data_module):
-    dataloader = DataLoader(cifar_data_module.test_data, shuffle=True, num_workers=cifar_data_module.num_workers)
+    dataloader = DataLoader(cifar_data_module.test_data, batch_size=cifar_data_module.batch_size, shuffle=True,  num_workers=cifar_data_module.num_workers)
     num_probes_of_class = 5
     classes_id = cifar_data_module.classes_to_learn + cifar_data_module.classes_to_dream
     dataiter = iter(dataloader)
     batch_img, batch_targets = next(dataiter)
     batch_img_shape = batch_img.shape
     batch_target_shape = batch_targets.shape
-    print(batch_img_shape, batch_target_shape)
-    print((*batch_img_shape[:-1],0))
-    prep_imgs = [torch.empty((*batch_img_shape[:-1],0)) for _ in range(len(classes_id))]
-    prep_targets = [torch.empty((*batch_target_shape[:-1],0)) for _ in range(len(classes_id))]
+    prep_imgs = [torch.empty((0, *batch_img_shape[1:])) for _ in range(len(classes_id))]
+    prep_targets = [torch.empty((0)) for _ in range(len(classes_id))]
     counted = 0
     while num_probes_of_class * len(classes_id) > counted:
         batch_img, batch_targets = next(iter(dataloader))
@@ -46,10 +44,12 @@ def prepare_batch(cifar_data_module):
             if looking_num_probes > 0:
                 mask = batch_targets == class_id
                 indices = torch.nonzero(mask)[:looking_num_probes]
-                prep_imgs[idx].cat(batch_img[indices], -1)
-                prep_targets[idx].cat(batch_targets[indices], -1)
+                prep_imgs[idx].cat(batch_img[indices], 0)
+                prep_targets[idx].cat(batch_targets[indices], 0)
                 counted += len(indices)
 
+    prep_imgs = torch.cat(prep_imgs, axis=0)
+    prep_targets = torch.cat(prep_imgs, axis=0)
 
     return prep_imgs, prep_targets
 
