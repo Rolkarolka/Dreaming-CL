@@ -1,6 +1,5 @@
 defaults:
   - resnet_schema
-
 batch_size: 64
 max_epochs: 10
 classes_to_learn:

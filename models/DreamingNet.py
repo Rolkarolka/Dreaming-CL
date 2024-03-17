@@ -6,7 +6,6 @@ import csv
 from torch import optim
 import torch.nn as nn
 import torchmetrics
-from torchvision import models
 
 from models.MetricLearningLoss import MetricLearningLoss
 from utils.utils import embed_imgs, visualize_output_space, prepare_batch

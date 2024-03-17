@@ -113,7 +113,7 @@ class DeepInversion:
             class_num_samples,
             logger,
             debug_output=True,
-            epochs=1000,
+            epochs=10, #00,
             di_lr=0.1,
             competitive_scale=0.0,
             di_l2_scale=3e-8,
@@ -175,7 +175,6 @@ class DeepInversion:
         net_student.eval()
 
         optimizer.state = collections.defaultdict(dict)  # Reset state of optimizer
-        pooling_function = nn.modules.pooling.AvgPool2d(kernel_size=2)
 
         ## Create hooks for feature statistics catching
         loss_r_feature_layers = []
@@ -184,15 +183,13 @@ class DeepInversion:
                 loss_r_feature_layers.append(DeepInversionFeatureHook(module))
 
         # setting up the range for jitter
-        lim_0, lim_1 = 2, 2
-
         skipfirst = False
         iteration = 0
         for lr_it, lower_res in enumerate([2, 1]):
             if lr_it==0:
-                iterations_per_layer = 2000
+                iterations_per_layer = 20 #00
             else:
-                iterations_per_layer = 1000 if not skipfirst else 2000
+                iterations_per_layer = 10 #00 if not skipfirst else 2000
 
             if lr_it==0 and skipfirst:
                 continue
@@ -217,7 +214,6 @@ class DeepInversion:
                 flip = random.random() > 0.5
                 if flip and self.do_flip:
                     inputs_jit = torch.flip(inputs_jit, dims=(3,))
-
 
                 # foward with jit images
                 optimizer.zero_grad()
@@ -258,8 +254,6 @@ class DeepInversion:
                     # JS criteria - 0 means full correlation, 1 - means completely different
                     loss_verifier_cig = 1.0 - torch.clamp(loss_verifier_cig, 0.0, 1.0)
 
-                    # loss = loss + self.competitive_scale * loss_verifier_cig
-
                 # l2 loss
                 loss_l2 = torch.norm(inputs_jit.view(self.batch_size, -1), dim=1).mean()
 
@@ -280,10 +274,6 @@ class DeepInversion:
                     print("total loss", loss.item())
                     print("loss_r_feature", loss_r_feature.item())
                     print("main criterion", criterion(outputs, targets).item())
-
-                    # vutils.save_image(inputs.data.clone(),
-                    #                   './{}/output_{}.png'.format(prefix, epoch // 200),
-                    #                   normalize=True, scale_each=True, nrow=10)
 
                 if do_clip:
                     inputs.data = clip(inputs.data)
@@ -350,7 +340,7 @@ class DeepInversion:
                 device)
             optimizer_di = optim.Adam([inputs], lr=self.di_lr)
 
-            print(f"Starting {i}/{all_probes // self.batch_size} model inversion")
+            print(f"Starting {i+1}/{all_probes // self.batch_size} model inversion")
             inputs = self._get_images(net=net_teacher, targets=targets,
                                       net_student=net_student, prefix=prefix,
                                       optimizer=optimizer_di, inputs=inputs,
