@@ -53,6 +53,7 @@ class CIFAR10Subset(CIFAR10):
     def get_class_importance(self, classes_to_learn, teacher_class_proportion):
         samples_proportion = {}
         for class_name in classes_to_learn:
+            print(self.targets)
             x = sum(torch.where(self.targets == class_name, 1, 0).item())
             print(x)
             samples_proportion[class_name] = sum(self.targets == class_name)
